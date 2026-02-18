@@ -84,55 +84,70 @@
     </div>
 
     <script>
-        // 1. 음성 엔진 초기화 (목소리 리스트 미리 불러오기)
-        let voices = [];
-        function loadVoices() {
-            voices = window.speechSynthesis.getVoices();
+       // iOS Safari speechSynthesis 버그 대응: 주기적 resume
+let _iosKeepAlive = null;
+
+function speak(text, type, btnElement) {
+    const synth = window.speechSynthesis;
+
+    if (btnElement) {
+        btnElement.classList.add('playing');
+        setTimeout(() => btnElement.classList.remove('playing'), 200);
+    }
+
+    // ① 기존 keepAlive 타이머 제거
+    if (_iosKeepAlive) clearInterval(_iosKeepAlive);
+    
+    // ② 강제 종료 후 충분한 딜레이
+    synth.cancel();
+
+    setTimeout(() => {
+        // ③ voices 재확인 (비동기 로딩 대응)
+        let currentVoices = synth.getVoices();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        let selectedVoice = null;
+
+        if (type === 'english') {
+            utterance.lang = 'en-US';
+            selectedVoice = currentVoices.find(v => v.lang === 'en-US' && v.localService);
+            if (!selectedVoice) selectedVoice = currentVoices.find(v => v.lang.startsWith('en'));
+        } else if (type === 'chinese' || (type === 'shadowing' && /[\u3400-\u9FBF]/.test(text))) {
+            utterance.lang = 'zh-CN';
+            selectedVoice = currentVoices.find(v => v.lang === 'zh-CN');
+            if (!selectedVoice) selectedVoice = currentVoices.find(v => v.lang.startsWith('zh'));
+        } else if (type === 'japanese') {
+            utterance.lang = 'ja-JP';
+            selectedVoice = currentVoices.find(v => v.lang.startsWith('ja'));
         }
-        loadVoices();
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = loadVoices;
-        }
 
-        // 2. 말하기 함수 (핵심 수정: 딜레이 추가)
-        function speak(text, type, btnElement) {
-            const synth = window.speechSynthesis;
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.rate = (type === 'chinese') ? 0.8 : 0.9;
 
-            // 버튼 시각 효과 (눌렀다는 티 내기)
-            if(btnElement) {
-                btnElement.classList.add('playing');
-                setTimeout(() => btnElement.classList.remove('playing'), 200);
-            }
-
-            // 기존 소리 강제 종료
-            synth.cancel();
-
-            // ⚡ 0.05초 딜레이 후 재생 (이게 있어야 아이폰에서 안 끊김!)
-            setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // 목소리 찾기 (없으면 기본값)
-                let selectedVoice = null;
-                if (type === 'english') {
-                    utterance.lang = 'en-US';
-                    selectedVoice = voices.find(v => v.lang === 'en-US');
-                } else if (type === 'chinese' || (type === 'shadowing' && text.match(/[\u3400-\u9FBF]/))) {
-                    utterance.lang = 'zh-CN';
-                    selectedVoice = voices.find(v => v.lang === 'zh-CN');
-                } else if (type === 'japanese') {
-                    utterance.lang = 'ja-JP';
-                    selectedVoice = voices.find(v => v.lang === 'ja-JP');
+        // ④ iOS 핵심 수정: 250ms마다 resume() 호출로 suspended 방지
+        utterance.onstart = () => {
+            _iosKeepAlive = setInterval(() => {
+                if (synth.speaking && synth.paused) {
+                    synth.resume();
                 }
+            }, 250);
+        };
 
-                if (selectedVoice) utterance.voice = selectedVoice;
-                
-                // 속도 조절
-                utterance.rate = (type === 'chinese') ? 0.8 : 0.9; 
+        utterance.onend = () => {
+            if (_iosKeepAlive) clearInterval(_iosKeepAlive);
+        };
 
-                // 재생 시작
-                synth.speak(utterance);
-            }, 50); // 50ms 딜레이
-        }
+        utterance.onerror = () => {
+            if (_iosKeepAlive) clearInterval(_iosKeepAlive);
+        };
+
+        synth.speak(utterance);
+
+        // ⑤ iOS 15+ 추가 버그: speak 직후 resume 필요
+        setTimeout(() => { if (synth.paused) synth.resume(); }, 100);
+
+    }, 150); // 50ms → 150ms로 증가
+}
 
         const studyPlan = {
             "2026-02-18": {
