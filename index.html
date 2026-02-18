@@ -3,90 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2월 언어 정복 앱</title>
+    <title>너의 이름은: 언어의 혜성</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
-        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .card { background: #1e293b; border-radius: 20px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
-        .tab-btn { padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; flex: 1; margin: 0 4px; transition: all 0.3s; background: #1e293b; color: #94a3b8; }
-        .active { background: #3b82f6; color: white; font-weight: bold; }
-        .lang-tag { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-bottom: 12px; }
-        .progress-container { background: #334155; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
-        .progress-bar { background: #3b82f6; height: 100%; width: 0%; transition: width 0.5s ease; }
-        .study-img { width: 100%; height: 180px; border-radius: 15px; margin-bottom: 20px; background-size: cover; background-position: center; border: 1px solid #334155; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(to bottom, #a18cd1 0%, #fbc2eb 100%); /* 혜성 느낌 파스텔톤 */
+            color: #fff;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+        .main-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 50% 10%, #1a1a2e, #16213e, #0f3460);
+        }
+        /* 별똥별 애니메이션 */
+        .star {
+            position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px #fff;
+            animation: shooting 3s linear infinite; opacity: 0;
+        }
+        @keyframes shooting {
+            0% { transform: translateX(0) translateY(0); opacity: 1; }
+            100% { transform: translateX(-300px) translateY(300px); opacity: 0; }
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
+            border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .lang-tag {
+            display: inline-block; padding: 5px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3);
+        }
+        .study-img {
+            width: 100%; height: 200px; border-radius: 15px; margin-bottom: 20px;
+            background-size: cover; background-position: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .study-img::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50%;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            border-radius: 0 0 15px 15px;
+        }
+        .img-caption {
+            position: absolute; bottom: 15px; left: 15px; font-size: 14px; font-weight: bold;
+            color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10;
+        }
+        .progress-bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { background: linear-gradient(90deg, #00c6ff, #0072ff); height: 100%; width: 0%; transition: 0.5s; }
     </style>
 </head>
-<body class="p-5 max-w-md mx-auto">
-    <header class="mb-10 text-center pt-6">
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">GLOBAL <span class="text-blue-500">2월</span></h1>
-        <p class="text-slate-400 text-sm mt-2 font-medium">왕복 2시간, 기적의 시간</p>
+<body class="p-5 max-w-md mx-auto relative">
+    <div class="main-bg">
+        <div class="star" style="top: 10%; right: 10%; animation-delay: 0s;"></div>
+        <div class="star" style="top: 20%; right: 20%; animation-delay: 2s;"></div>
+        <div class="star" style="top: 5%; right: 30%; animation-delay: 4s;"></div>
+    </div>
+
+    <header class="mb-8 text-center pt-4">
+        <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-pink-200 tracking-tight" style="text-shadow: 0 0 20px rgba(255,255,255,0.3);">너의 이름은</h1>
+        <p class="text-blue-100 text-xs mt-2 font-medium tracking-[0.3em]">MUSUBI : 연결</p>
+        <div class="mt-4 inline-block px-4 py-1 rounded-full bg-white/10 text-xs text-blue-200 border border-white/20">
+            📅 <span id="current-date">날짜 로딩 중...</span>
+        </div>
     </header>
 
-    <div class="flex justify-between mb-8 p-1 bg-slate-900 rounded-xl">
-        <div id="tab-eng" class="tab-btn active" onclick="showTab('eng')">ENG</div>
-        <div id="tab-chi" class="tab-btn" onclick="showTab('chi')">CHN</div>
-        <div id="tab-jpn" class="tab-btn" onclick="showTab('jpn')">JPN</div>
-    </div>
-
-    <div id="eng-content" class="content-section">
-        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1543167423-34612e03319b?q=80&w=800&auto=format&fit=crop');"></div>
-        <div class="card">
-            <span class="lang-tag bg-blue-600">월/수/금 루틴</span>
-            <h2 class="text-xl font-bold mb-2">TOEIC/OPIc LC</h2>
-            <div class="progress-container"><div class="progress-bar" id="pb-eng"></div></div>
-            <div class="mt-6 space-y-4">
-                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 33)">🔊 Would you like me to finish...?</p>
-                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 66)">🔊 The marketing department is...</p>
-                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 100)">🔊 I'm calling to confirm my...</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="chi-content" class="content-section hidden">
-        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1525286354093-272e27f0f624?q=80&w=800&auto=format&fit=crop');"></div>
-        <div class="card">
-            <span class="lang-tag bg-red-600 text-white">화/목 루틴</span>
-            <h2 class="text-xl font-bold mb-2">HSK 3급 단어/어순</h2>
-            <div class="progress-container"><div class="progress-bar" id="pb-chi"></div></div>
-            <div class="grid grid-cols-2 gap-2 mt-6">
-                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 25)">参加会议</div>
-                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 50)">打扫房间</div>
-                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 75)">骑自行车</div>
-                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 100)">打算去旅游</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="jpn-content" class="content-section hidden">
-        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=80&w=800&auto=format&fit=crop');"></div>
-        <div class="card">
-            <span class="lang-tag bg-emerald-600 text-white">토/일 루틴</span>
-            <h2 class="text-xl font-bold mb-2">JLPT 독해/한자</h2>
-            <div class="progress-container"><div class="progress-bar" id="pb-jpn"></div></div>
-            <div class="mt-6 space-y-3">
-                <div class="flex justify-between p-3 bg-slate-800 rounded-lg" onclick="complete('jpn', 50)">
-                    <span class="font-bold text-emerald-400">待 vs 持</span>
-                    <span class="text-xs">기다리다 / 가지다</span>
-                </div>
-                <div class="flex justify-between p-3 bg-slate-800 rounded-lg" onclick="complete('jpn', 100)">
-                    <span class="font-bold text-emerald-400">観光客 / 急増</span>
-                    <span class="text-xs">관광객 / 급증</span>
-                </div>
-            </div>
+    <div id="dynamic-content">
+        <div class="card text-center py-10">
+            <p>오늘의 학습 내용을 불러오는 중입니다... 🌠</p>
         </div>
     </div>
 
     <script>
-        function showTab(lang) {
-            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(lang + '-content').classList.remove('hidden');
-            document.getElementById('tab-' + lang).classList.add('active');
+        // 📅 2. 2월 데이터베이스 (여기 내용을 바꾸면 앱 내용이 바뀝니다!)
+        const studyPlan = {
+            // 목요일 (중국어) - 2월 19일
+            "2026-02-19": {
+                type: "chinese",
+                title: "HSK 3급: 일상 동사",
+                image: "https://images.unsplash.com/photo-1525286354093-272e27f0f624?q=80&w=800&auto=format&fit=crop",
+                caption: "시작이 반이다",
+                items: [
+                    { text: "参加会议 (회의 참석)", sub: "cānjiā huìyì" },
+                    { text: "打扫房间 (방 청소)", sub: "dǎsǎo fángjiān" },
+                    { text: "骑自行车 (자전거 타기)", sub: "qí zìxíngchē" },
+                    { text: "打算去旅游 (여행 계획)", sub: "dǎsuàn qù lǚyóu" }
+                ]
+            },
+            // 금요일 (영어) - 2월 20일
+            "2026-02-20": {
+                type: "english",
+                title: "LC Part 2: 제안과 요청",
+                image: "https://images.unsplash.com/photo-1543167423-34612e03319b?q=80&w=800&auto=format&fit=crop",
+                caption: "귀를 열고 따라하세요",
+                items: [
+                    { text: "Why don't we grab some coffee?", sub: "커피 한잔 어때요?" },
+                    { text: "Would you like me to review it?", sub: "제가 검토해 드릴까요?" },
+                    { text: "Let's go over the details.", sub: "세부 사항을 살펴봅시다." }
+                ]
+            },
+            // 토요일 (쉐도잉) - 2월 21일 (영어)
+            "2026-02-21": {
+                type: "shadowing",
+                title: "Saturday Special: Emma Watson",
+                image: "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=800&auto=format&fit=crop",
+                caption: "우아한 영국 발음",
+                script: {
+                    speaker: "Emma Watson (UN Speech)",
+                    content: "If not me, who? If not now, when? I invite you to step forward, to be seen, and to ask yourself...",
+                    trans: "내가 아니면 누가? 지금이 아니면 언제? 당신이 앞으로 나와 당당히 자신에게 물어보기를 청합니다..."
+                }
+            },
+            // 일요일 (휴식) - 2월 22일
+            "2026-02-22": { type: "rest" },
+
+            // 다음주 월요일 (영어) - 2월 24일 (날짜 수정: 23일이 월요일)
+            "2026-02-23": {
+                type: "english",
+                title: "LC Part 1: 사진 묘사",
+                image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop",
+                caption: "눈에 보이는 것을 영어로",
+                items: [
+                    { text: "They are shaking hands.", sub: "그들은 악수를 하고 있다." },
+                    { text: "A woman is typing on a keyboard.", sub: "여자가 키보드를 치고 있다." },
+                    { text: "Some boxes are stacked on the floor.", sub: "상자들이 바닥에 쌓여 있다." }
+                ]
+            },
+             // 화요일 (중국어) - 2월 24일
+             "2026-02-24": {
+                type: "chinese",
+                title: "HSK 3급: 감정과 상태",
+                image: "https://images.unsplash.com/photo-1515169273894-7e876dcf15ea?q=80&w=800&auto=format&fit=crop",
+                caption: "기분을 표현해 봐요",
+                items: [
+                    { text: "特别高兴 (특별히 기쁘다)", sub: "tèbié gāoxìng" },
+                    { text: "觉得舒服 (편안하다고 느끼다)", sub: "juéde shūfu" },
+                    { text: "感到害怕 (무서움을 느끼다)", sub: "gǎndào hàipà" },
+                    { text: "突然生气 (갑자기 화내다)", sub: "tūrán shēngqì" }
+                ]
+            },
+            // 수요일 (영어) - 2월 25일
+            "2026-02-25": {
+                type: "english",
+                title: "LC Part 3: 회사 생활",
+                image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop",
+                caption: "비즈니스 회화 핵심",
+                items: [
+                    { text: "I'm calling to confirm the meeting.", sub: "회의를 확인하려고 전화했습니다." },
+                    { text: "Where is the conference room?", sub: "회의실이 어디인가요?" },
+                    { text: "The deadline has been extended.", sub: "마감일이 연장되었습니다." }
+                ]
+            },
+            // 목요일 (중국어) - 2월 26일
+             "2026-02-26": {
+                type: "chinese",
+                title: "HSK 3급: 접속사 정복",
+                image: "https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?q=80&w=800&auto=format&fit=crop",
+                caption: "문장을 길게 만들어요",
+                items: [
+                    { text: "虽然...但是... (비록~하지만)", sub: "suīrán... dànshì..." },
+                    { text: "不但...而且... (~뿐만 아니라)", sub: "búdàn... érqiě..." },
+                    { text: "因为...所以... (~때문에 그래서)", sub: "yīnwèi... suǒyǐ..." },
+                    { text: "如果...就... (만약 ~라면)", sub: "rúguǒ... jiù..." }
+                ]
+            },
+            // 금요일 (영어) - 2월 27일
+            "2026-02-27": {
+                type: "english",
+                title: "LC Part 4: 공지사항",
+                image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=800&auto=format&fit=crop",
+                caption: "안내방송 듣기",
+                items: [
+                    { text: "Attention, please.", sub: "주목해 주세요." },
+                    { text: "Please remain seated.", sub: "자리에 앉아 계셔 주세요." },
+                    { text: "Thank you for your cooperation.", sub: "협조해 주셔서 감사합니다." }
+                ]
+            },
+             // 토요일 (쉐도잉) - 2월 28일 (중국어)
+             "2026-02-28": {
+                type: "shadowing",
+                title: "Sat Special: 겨우, 서른",
+                image: "https://images.unsplash.com/photo-1498835032512-d6aa46903268?q=80&w=800&auto=format&fit=crop",
+                caption: "현대 중국어의 정수",
+                script: {
+                    speaker: "Gu Jia (三十而已)",
+                    content: "我没有靠山，我就是自己最稳的靠山。",
+                    trans: "난 든든한 뒷배경 같은 거 없어. 내가 바로 내 가장 든든한 배경이야."
+                }
+            },
+        };
+
+        // 🚀 3. 날짜 계산 및 렌더링 로직
+        function initApp() {
+            const today = new Date();
+            // 한국 시간 기준 날짜 문자열 생성 (YYYY-MM-DD)
+            const dateStr = today.getFullYear() + "-" + 
+                            String(today.getMonth() + 1).padStart(2, '0') + "-" + 
+                            String(today.getDate()).padStart(2, '0');
+            
+            // 날짜 표시 업데이트
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            document.getElementById('current-date').innerText = `${dateStr} (${days[today.getDay()]})`;
+
+            // 오늘의 데이터 가져오기
+            const data = studyPlan[dateStr];
+            const container = document.getElementById('dynamic-content');
+
+            // 1. 데이터가 없을 때 (3월 이후거나 일요일 등)
+            if (!data || data.type === 'rest') {
+                container.innerHTML = `
+                    <div class="card flex flex-col items-center justify-center text-center py-10">
+                        <span class="text-6xl mb-4">🌌</span>
+                        <h2 class="text-2xl font-bold text-blue-100">완전한 휴식</h2>
+                        <p class="text-gray-200 mt-4 text-sm leading-relaxed">
+                            오늘은 정해진 학습 스케줄이 없거나 쉬는 날입니다.<br>
+                            편안하게 재충전하고 내일 만나요!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 2. 쉐도잉 (토요일) 렌더링
+            if (data.type === 'shadowing') {
+                container.innerHTML = `
+                    <div class="study-img" style="background-image: url('${data.image}')">
+                        <div class="img-caption">${data.caption}</div>
+                    </div>
+                    <div class="card">
+                        <span class="lang-tag bg-purple-500 text-white">토요일 스페셜</span>
+                        <h2 class="text-xl font-bold mb-4">${data.title}</h2>
+                        <div class="flex items-start mb-4 bg-white/10 p-4 rounded-xl">
+                            <div>
+                                <p class="text-sm font-bold text-blue-200 mb-1">${data.script.speaker}</p>
+                                <p class="text-lg font-serif italic mb-3">"${data.script.content}"</p>
+                                <p class="text-sm text-gray-300 border-t border-white/20 pt-2">${data.script.trans}</p>
+                            </div>
+                        </div>
+                        <div class="text-center mt-6">
+                            <button class="px-6 py-2 bg-blue-500 rounded-full text-sm font-bold shadow-lg" onclick="alert('3번 연속 따라 읽으셨나요? 멋져요! 👍')">완료 체크</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 3. 일반 학습 (평일) 렌더링
+            let itemsHtml = '';
+            data.items.forEach((item, index) => {
+                // 랜덤 이미지 (임시)
+                itemsHtml += `
+                    <div class="flex items-center p-4 bg-white/10 rounded-xl mb-3 border border-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition" onclick="toggleCheck(this)">
+                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-4 text-xs font-bold">${index + 1}</div>
+                        <div>
+                            <p class="text-base font-bold">${item.text}</p>
+                            <p class="text-xs text-blue-200 mt-1">${item.sub}</p>
+                        </div>
+                        <div class="ml-auto text-xl opacity-0 check-mark">✅</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="study-img" style="background-image: url('${data.image}')">
+                    <div class="img-caption">${data.caption}</div>
+                </div>
+                <div class="card">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="lang-tag ${data.type === 'english' ? 'bg-blue-600' : 'bg-red-600'} text-white">${data.type.toUpperCase()}</span>
+                        <span class="text-xs text-gray-300" id="progress-text">0% 달성</span>
+                    </div>
+                    <h2 class="text-xl font-bold mb-4">${data.title}</h2>
+                    <div class="progress-bar-bg mb-6"><div class="progress-bar-fill" id="daily-progress"></div></div>
+                    <div class="space-y-2">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
         }
-        function complete(lang, percent) {
-            document.getElementById('pb-' + lang).style.width = percent + '%';
+
+        // 체크박스 토글 함수
+        function toggleCheck(element) {
+            const check = element.querySelector('.check-mark');
+            const isChecked = check.style.opacity === '1';
+            
+            check.style.opacity = isChecked ? '0' : '1';
+            element.classList.toggle('bg-blue-500/30'); // 체크 시 배경색 변경
+            
+            updateProgress();
         }
+
+        // 진도율 업데이트
+        function updateProgress() {
+            const total = document.querySelectorAll('.check-mark').length;
+            const checked = document.querySelectorAll('.check-mark[style="opacity: 1;"]').length;
+            const percent = Math.round((checked / total) * 100);
+            
+            document.getElementById('daily-progress').style.width = percent + '%';
+            document.getElementById('progress-text').innerText = percent + '% 달성';
+
+            if (percent === 100) {
+                setTimeout(() => alert('🎉 오늘의 목표 달성! 퇴근길이 가볍겠네요!'), 300);
+            }
+        }
+
+        // 앱 실행
+        initApp();
     </script>
 </body>
 </html>
