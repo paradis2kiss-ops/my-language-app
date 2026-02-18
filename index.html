@@ -7,8 +7,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3449/3449678.png">
-    
     <title>WAAAY-UP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -26,15 +24,6 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
             background: radial-gradient(circle at 50% 10%, #1a1a2e, #16213e, #0f3460);
         }
-        .star {
-            position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
-            box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 40px #fff;
-            animation: shooting 3s linear infinite; opacity: 0;
-        }
-        @keyframes shooting {
-            0% { transform: translateX(0) translateY(0); opacity: 1; }
-            100% { transform: translateX(-300px) translateY(300px); opacity: 0; }
-        }
         .card {
             background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
             border-radius: 20px; padding: 20px; margin-bottom: 20px;
@@ -50,13 +39,7 @@
             width: 100%; height: 200px; border-radius: 15px; margin-bottom: 20px;
             background-size: cover; background-position: center;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             position: relative;
-        }
-        .study-img::after {
-            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50%;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-            border-radius: 0 0 15px 15px;
         }
         .img-caption {
             position: absolute; bottom: 15px; left: 15px; font-size: 16px; font-weight: 800;
@@ -66,46 +49,91 @@
         }
         .progress-bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 10px; overflow: hidden; }
         .progress-bar-fill { background: linear-gradient(90deg, #00c6ff, #0072ff); height: 100%; width: 0%; transition: 0.5s; }
-        
         h1.app-title { font-family: 'Montserrat', sans-serif; letter-spacing: -1px; }
         .check-mark { transition: opacity 0.3s; }
         
+        /* 버튼 눌림 효과 */
         .speak-btn {
             background: rgba(255,255,255,0.2); width: 44px; height: 44px;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            margin-right: 12px; cursor: pointer; transition: 0.2s;
-            border: 1px solid rgba(255,255,255,0.3);
-            font-size: 20px;
+            margin-right: 12px; cursor: pointer; transition: 0.1s;
+            border: 1px solid rgba(255,255,255,0.3); font-size: 20px;
         }
-        .speak-btn:active { transform: scale(0.9); background: rgba(59, 130, 246, 0.8); }
+        .speak-btn:active, .speak-btn.playing { 
+            transform: scale(0.9); 
+            background: #3b82f6; 
+            border-color: #60a5fa;
+        }
     </style>
 </head>
 <body class="p-5 max-w-md mx-auto relative">
-    <div class="main-bg">
-        <div class="star" style="top: 10%; right: 10%; animation-delay: 0s;"></div>
-        <div class="star" style="top: 20%; right: 20%; animation-delay: 2s;"></div>
-        <div class="star" style="top: 5%; right: 30%; animation-delay: 4s;"></div>
-    </div>
+    <div class="main-bg"></div>
 
     <header class="mb-8 text-center pt-4">
         <h1 class="app-title text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-blue-400 italic" style="text-shadow: 0 0 30px rgba(0,198,255,0.5);">
             WAAAY-UP
         </h1>
-        <p class="text-blue-100 text-[10px] mt-2 font-bold tracking-[0.5em] uppercase">
-            LIMITLESS : POTENTIAL
-        </p>
+        <p class="text-blue-100 text-[10px] mt-2 font-bold tracking-[0.5em] uppercase">LIMITLESS : POTENTIAL</p>
         <div class="mt-4 inline-block px-4 py-1 rounded-full bg-white/10 text-xs text-blue-200 border border-white/20">
-            📅 <span id="current-date">날짜 로딩 중...</span>
+            📅 <span id="current-date">로딩 중...</span>
         </div>
     </header>
 
     <div id="dynamic-content">
-        <div class="card text-center py-10">
-            <p>오늘의 학습 내용을 불러오는 중입니다... 🚀</p>
-        </div>
+        <div class="card text-center py-10"><p>로딩 중... 🚀</p></div>
     </div>
 
     <script>
+        // 1. 음성 엔진 초기화 (목소리 리스트 미리 불러오기)
+        let voices = [];
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // 2. 말하기 함수 (핵심 수정: 딜레이 추가)
+        function speak(text, type, btnElement) {
+            const synth = window.speechSynthesis;
+
+            // 버튼 시각 효과 (눌렀다는 티 내기)
+            if(btnElement) {
+                btnElement.classList.add('playing');
+                setTimeout(() => btnElement.classList.remove('playing'), 200);
+            }
+
+            // 기존 소리 강제 종료
+            synth.cancel();
+
+            // ⚡ 0.05초 딜레이 후 재생 (이게 있어야 아이폰에서 안 끊김!)
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // 목소리 찾기 (없으면 기본값)
+                let selectedVoice = null;
+                if (type === 'english') {
+                    utterance.lang = 'en-US';
+                    selectedVoice = voices.find(v => v.lang === 'en-US');
+                } else if (type === 'chinese' || (type === 'shadowing' && text.match(/[\u3400-\u9FBF]/))) {
+                    utterance.lang = 'zh-CN';
+                    selectedVoice = voices.find(v => v.lang === 'zh-CN');
+                } else if (type === 'japanese') {
+                    utterance.lang = 'ja-JP';
+                    selectedVoice = voices.find(v => v.lang === 'ja-JP');
+                }
+
+                if (selectedVoice) utterance.voice = selectedVoice;
+                
+                // 속도 조절
+                utterance.rate = (type === 'chinese') ? 0.8 : 0.9; 
+
+                // 재생 시작
+                synth.speak(utterance);
+            }, 50); // 50ms 딜레이
+        }
+
         const studyPlan = {
             "2026-02-18": {
                 type: "english",
@@ -223,46 +251,6 @@
             },
         };
 
-        // 🌟 [핵심 수정] 전역 변수로 선언하여 가비지 컬렉션 방지
-        let currentUtterance = null;
-
-        function speak(text, type) {
-            const synth = window.speechSynthesis;
-            
-            // 기존 발화 취소
-            if (synth.speaking) {
-                synth.cancel();
-            }
-
-            // 새로운 발화 객체 생성 및 전역 변수에 저장
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            
-            if (type === 'english') {
-                currentUtterance.lang = 'en-US'; 
-                currentUtterance.rate = 0.9; 
-            } else if (type === 'chinese' || (type === 'shadowing' && text.match(/[\u3400-\u9FBF]/))) {
-                currentUtterance.lang = 'zh-CN'; 
-                currentUtterance.rate = 0.8; 
-            } else if (type === 'japanese') {
-                currentUtterance.lang = 'ja-JP'; 
-                currentUtterance.rate = 0.9;
-            } else {
-                currentUtterance.lang = 'en-US'; 
-            }
-
-            // 발화가 끝나면 전역 변수 초기화 (메모리 관리)
-            currentUtterance.onend = function() {
-                currentUtterance = null;
-            };
-
-            // 아이폰(iOS) 버그 수정: 일시정지 상태면 강제 재개
-            if (synth.paused) {
-                synth.resume();
-            }
-
-            synth.speak(currentUtterance);
-        }
-
         function initApp() {
             const today = new Date();
             const dateStr = today.getFullYear() + "-" + 
@@ -280,20 +268,15 @@
                     <div class="card flex flex-col items-center justify-center text-center py-10">
                         <span class="text-6xl mb-4">🌌</span>
                         <h2 class="text-2xl font-bold text-blue-100">완전한 휴식</h2>
-                        <p class="text-gray-200 mt-4 text-sm leading-relaxed">
-                            오늘은 정해진 학습 스케줄이 없거나 쉬는 날입니다.<br>
-                            편안하게 재충전하고 내일 만나요!
-                        </p>
-                    </div>
-                `;
+                        <p class="text-gray-200 mt-4 text-sm leading-relaxed">오늘은 충전하는 날! 🔋</p>
+                    </div>`;
                 return;
             }
 
             if (data.type === 'shadowing') {
+                const langType = data.script.speaker.includes("Emma") ? 'english' : 'chinese';
                 container.innerHTML = `
-                    <div class="study-img" style="background-image: url('${data.image}')">
-                        <div class="img-caption">${data.caption}</div>
-                    </div>
+                    <div class="study-img" style="background-image: url('${data.image}')"><div class="img-caption">${data.caption}</div></div>
                     <div class="card">
                         <span class="lang-tag bg-purple-500 text-white">토요일 스페셜</span>
                         <h2 class="text-xl font-bold mb-4">${data.title}</h2>
@@ -306,17 +289,10 @@
                         </div>
                         <div class="text-center mt-6 flex justify-center gap-2">
                              <button class="px-6 py-2 bg-purple-600 rounded-full text-sm font-bold shadow-lg flex items-center" 
-                                onclick="speak('${data.script.content}', 'chinese')">
-                                🔊 듣기
-                            </button>
-                            <button class="px-6 py-2 bg-blue-500 rounded-full text-sm font-bold shadow-lg" onclick="alert('3번 연속 따라 읽으셨나요? 멋져요! 👍')">완료 체크</button>
+                                onclick="speak('${data.script.content.replace(/'/g, "\\'")}', '${langType}', this)">🔊 듣기</button>
+                            <button class="px-6 py-2 bg-blue-500 rounded-full text-sm font-bold shadow-lg" onclick="alert('멋져요! 👍')">완료</button>
                         </div>
-                    </div>
-                `;
-                const speakBtn = container.querySelector('button');
-                const langType = data.script.speaker.includes("Emma") ? 'english' : 'chinese';
-                speakBtn.setAttribute('onclick', `speak("${data.script.content}", "${langType}")`);
-                
+                    </div>`;
                 return;
             }
 
@@ -324,22 +300,14 @@
             data.items.forEach((item, index) => {
                 itemsHtml += `
                     <div class="flex items-center p-4 bg-white/10 rounded-xl mb-3 border border-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition" onclick="toggleCheck(this)">
-                        <div class="speak-btn" onclick="event.stopPropagation(); speak('${item.text}', '${data.type}')">
-                            🔊
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-base font-bold">${item.text}</p>
-                            <p class="text-xs text-blue-200 mt-1">${item.sub}</p>
-                        </div>
+                        <div class="speak-btn" onclick="event.stopPropagation(); speak('${item.text.replace(/'/g, "\\'")}', '${data.type}', this)">🔊</div>
+                        <div class="flex-1"><p class="text-base font-bold">${item.text}</p><p class="text-xs text-blue-200 mt-1">${item.sub}</p></div>
                         <div class="ml-auto text-xl opacity-0 check-mark">✅</div>
-                    </div>
-                `;
+                    </div>`;
             });
 
             container.innerHTML = `
-                <div class="study-img" style="background-image: url('${data.image}')">
-                    <div class="img-caption">${data.caption}</div>
-                </div>
+                <div class="study-img" style="background-image: url('${data.image}')"><div class="img-caption">${data.caption}</div></div>
                 <div class="card">
                     <div class="flex justify-between items-center mb-2">
                         <span class="lang-tag ${data.type === 'english' ? 'bg-blue-600' : 'bg-red-600'} text-white">${data.type.toUpperCase()}</span>
@@ -347,11 +315,8 @@
                     </div>
                     <h2 class="text-xl font-bold mb-4">${data.title}</h2>
                     <div class="progress-bar-bg mb-6"><div class="progress-bar-fill" id="daily-progress"></div></div>
-                    <div class="space-y-2">
-                        ${itemsHtml}
-                    </div>
-                </div>
-            `;
+                    <div class="space-y-2">${itemsHtml}</div>
+                </div>`;
         }
 
         function toggleCheck(element) {
@@ -359,18 +324,12 @@
             const isChecked = check.style.opacity === '1';
             check.style.opacity = isChecked ? '0' : '1';
             element.classList.toggle('bg-blue-500/30'); 
-            updateProgress();
-        }
-
-        function updateProgress() {
             const total = document.querySelectorAll('.check-mark').length;
             const checked = document.querySelectorAll('.check-mark[style="opacity: 1;"]').length;
             const percent = Math.round((checked / total) * 100);
             document.getElementById('daily-progress').style.width = percent + '%';
             document.getElementById('progress-text').innerText = percent + '% 달성';
-            if (percent === 100) {
-                setTimeout(() => alert('🎉 오늘의 목표 달성! 퇴근길이 가볍겠네요!'), 300);
-            }
+            if (percent === 100) setTimeout(() => alert('🎉 목표 달성!'), 300);
         }
 
         initApp();
