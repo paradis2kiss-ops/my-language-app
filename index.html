@@ -71,10 +71,11 @@
         .check-mark { transition: opacity 0.3s; }
         
         .speak-btn {
-            background: rgba(255,255,255,0.2); width: 40px; height: 40px; /* 터치 영역 확대 */
+            background: rgba(255,255,255,0.2); width: 44px; height: 44px;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
             margin-right: 12px; cursor: pointer; transition: 0.2s;
             border: 1px solid rgba(255,255,255,0.3);
+            font-size: 20px;
         }
         .speak-btn:active { transform: scale(0.9); background: rgba(59, 130, 246, 0.8); }
     </style>
@@ -222,32 +223,44 @@
             },
         };
 
-        function speak(text, type) {
-            if (!window.speechSynthesis) {
-                alert("이 브라우저는 음성 재생을 지원하지 않습니다.");
-                return;
-            }
-            
-            // 🌟 [핵심 수정] 기존에 재생 중이던 소리를 강제로 멈춥니다.
-            // 이렇게 해야 다음 문장이 씹히지 않고 나옵니다.
-            window.speechSynthesis.cancel();
+        // 🌟 [핵심 수정] 전역 변수로 선언하여 가비지 컬렉션 방지
+        let currentUtterance = null;
 
-            const utterance = new SpeechSynthesisUtterance(text);
+        function speak(text, type) {
+            const synth = window.speechSynthesis;
+            
+            // 기존 발화 취소
+            if (synth.speaking) {
+                synth.cancel();
+            }
+
+            // 새로운 발화 객체 생성 및 전역 변수에 저장
+            currentUtterance = new SpeechSynthesisUtterance(text);
             
             if (type === 'english') {
-                utterance.lang = 'en-US'; 
-                utterance.rate = 0.9; 
+                currentUtterance.lang = 'en-US'; 
+                currentUtterance.rate = 0.9; 
             } else if (type === 'chinese' || (type === 'shadowing' && text.match(/[\u3400-\u9FBF]/))) {
-                utterance.lang = 'zh-CN'; 
-                utterance.rate = 0.8; 
+                currentUtterance.lang = 'zh-CN'; 
+                currentUtterance.rate = 0.8; 
             } else if (type === 'japanese') {
-                utterance.lang = 'ja-JP'; 
-                utterance.rate = 0.9;
+                currentUtterance.lang = 'ja-JP'; 
+                currentUtterance.rate = 0.9;
             } else {
-                utterance.lang = 'en-US'; 
+                currentUtterance.lang = 'en-US'; 
             }
-            
-            window.speechSynthesis.speak(utterance);
+
+            // 발화가 끝나면 전역 변수 초기화 (메모리 관리)
+            currentUtterance.onend = function() {
+                currentUtterance = null;
+            };
+
+            // 아이폰(iOS) 버그 수정: 일시정지 상태면 강제 재개
+            if (synth.paused) {
+                synth.resume();
+            }
+
+            synth.speak(currentUtterance);
         }
 
         function initApp() {
