@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2월 언어 정복 앱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .card { background: #1e293b; border-radius: 20px; padding: 24px; margin-bottom: 20px; border: 1px solid #334155; }
+        .tab-btn { padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; flex: 1; margin: 0 4px; transition: all 0.3s; background: #1e293b; color: #94a3b8; }
+        .active { background: #3b82f6; color: white; font-weight: bold; }
+        .lang-tag { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-bottom: 12px; }
+        .progress-container { background: #334155; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { background: #3b82f6; height: 100%; width: 0%; transition: width 0.5s ease; }
+        .study-img { width: 100%; height: 180px; border-radius: 15px; margin-bottom: 20px; background-size: cover; background-position: center; border: 1px solid #334155; }
+    </style>
+</head>
+<body class="p-5 max-w-md mx-auto">
+    <header class="mb-10 text-center pt-6">
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">GLOBAL <span class="text-blue-500">2월</span></h1>
+        <p class="text-slate-400 text-sm mt-2 font-medium">왕복 2시간, 기적의 시간</p>
+    </header>
+
+    <div class="flex justify-between mb-8 p-1 bg-slate-900 rounded-xl">
+        <div id="tab-eng" class="tab-btn active" onclick="showTab('eng')">ENG</div>
+        <div id="tab-chi" class="tab-btn" onclick="showTab('chi')">CHN</div>
+        <div id="tab-jpn" class="tab-btn" onclick="showTab('jpn')">JPN</div>
+    </div>
+
+    <div id="eng-content" class="content-section">
+        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1543167423-34612e03319b?q=80&w=800&auto=format&fit=crop');"></div>
+        <div class="card">
+            <span class="lang-tag bg-blue-600">월/수/금 루틴</span>
+            <h2 class="text-xl font-bold mb-2">TOEIC/OPIc LC</h2>
+            <div class="progress-container"><div class="progress-bar" id="pb-eng"></div></div>
+            <div class="mt-6 space-y-4">
+                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 33)">🔊 Would you like me to finish...?</p>
+                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 66)">🔊 The marketing department is...</p>
+                <p class="p-3 bg-slate-800 rounded-lg text-sm" onclick="complete('eng', 100)">🔊 I'm calling to confirm my...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="chi-content" class="content-section hidden">
+        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1525286354093-272e27f0f624?q=80&w=800&auto=format&fit=crop');"></div>
+        <div class="card">
+            <span class="lang-tag bg-red-600 text-white">화/목 루틴</span>
+            <h2 class="text-xl font-bold mb-2">HSK 3급 단어/어순</h2>
+            <div class="progress-container"><div class="progress-bar" id="pb-chi"></div></div>
+            <div class="grid grid-cols-2 gap-2 mt-6">
+                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 25)">参加会议</div>
+                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 50)">打扫房间</div>
+                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 75)">骑自行车</div>
+                <div class="bg-slate-800 p-3 rounded text-xs text-center" onclick="complete('chi', 100)">打算去旅游</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="jpn-content" class="content-section hidden">
+        <div class="study-img" style="background-image: url('https://images.unsplash.com/photo-1528360983277-13d401cdc186?q=80&w=800&auto=format&fit=crop');"></div>
+        <div class="card">
+            <span class="lang-tag bg-emerald-600 text-white">토/일 루틴</span>
+            <h2 class="text-xl font-bold mb-2">JLPT 독해/한자</h2>
+            <div class="progress-container"><div class="progress-bar" id="pb-jpn"></div></div>
+            <div class="mt-6 space-y-3">
+                <div class="flex justify-between p-3 bg-slate-800 rounded-lg" onclick="complete('jpn', 50)">
+                    <span class="font-bold text-emerald-400">待 vs 持</span>
+                    <span class="text-xs">기다리다 / 가지다</span>
+                </div>
+                <div class="flex justify-between p-3 bg-slate-800 rounded-lg" onclick="complete('jpn', 100)">
+                    <span class="font-bold text-emerald-400">観光客 / 急増</span>
+                    <span class="text-xs">관광객 / 급증</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(lang) {
+            document.querySelectorAll('.content-section').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(lang + '-content').classList.remove('hidden');
+            document.getElementById('tab-' + lang).classList.add('active');
+        }
+        function complete(lang, percent) {
+            document.getElementById('pb-' + lang).style.width = percent + '%';
+        }
+    </script>
+</body>
+</html>
