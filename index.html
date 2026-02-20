@@ -14,8 +14,8 @@
         #loader { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
         .voice-btn { transition: all 0.2s; white-space: nowrap; }
         .voice-btn:active { transform: scale(0.9); }
-        .uk-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
-        .uk-panel.open { max-height: 120px; opacity: 1; }
+        .uk-panel { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, opacity 0.35s ease; opacity: 0; }
+        .uk-panel.open { max-height: 130px; opacity: 1; }
         input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(99,102,241,0.3); outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #818cf8; cursor: pointer; }
     </style>
@@ -106,11 +106,10 @@
                 utterance.pitch = 1.0;
 
             } else if (l.startsWith('ja')) {
-                // Google 日本語만 존재 - rate/pitch 최대한 자연스럽게
                 voice = voices.find(v => v.name === 'Google 日本語')
                       || voices.find(v => v.lang === 'ja-JP');
-                utterance.rate = 0.78;  // 천천히 = 더 또렷하게
-                utterance.pitch = 1.05; // 약간 높게 = 여성 느낌
+                utterance.rate = 0.92;
+                utterance.pitch = 1.05;
 
             } else if (l.startsWith('zh')) {
                 // 보통화 우선
@@ -248,17 +247,36 @@
                     });
 
                 } else if (item.type === 'ENGLISH' || item.type === 'ACTING') {
-                    // 🇺🇸 US / 🇬🇧 UK 즉시 재생 버튼 2개
+                    // 🇺🇸 US 즉시 재생
                     const usBtn = document.createElement('button');
                     usBtn.className = 'voice-btn bg-blue-900/30 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     usBtn.textContent = '🇺🇸 US';
                     usBtn.addEventListener('click', () => handleSpeak(item.text, 'en-US'));
                     btnGroup.appendChild(usBtn);
 
+                    // 🇬🇧 UK: 짧게 클릭 → 즉시 재생 / 길게 누르기 → 슬라이더 패널 토글
                     const ukBtn = document.createElement('button');
                     ukBtn.className = 'voice-btn bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     ukBtn.textContent = '🇬🇧 UK';
-                    ukBtn.addEventListener('click', () => handleSpeakCustom(item.text, 'en-GB', 0.85, 0.9));
+
+                    // 길게 누르기 감지
+                    let pressTimer = null;
+                    let isLongPress = false;
+
+                    ukBtn.addEventListener('pointerdown', () => {
+                        isLongPress = false;
+                        pressTimer = setTimeout(() => {
+                            isLongPress = true;
+                            // 슬라이더 패널 토글
+                            const panel = ukBtn.closest('.glass-card').querySelector('.uk-panel');
+                            if (panel) panel.classList.toggle('open');
+                        }, 500); // 0.5초 이상 누르면 패널 열림
+                    });
+                    ukBtn.addEventListener('pointerup', () => {
+                        clearTimeout(pressTimer);
+                        if (!isLongPress) handleSpeakCustom(item.text, 'en-GB', 0.85, 0.9);
+                    });
+                    ukBtn.addEventListener('pointerleave', () => clearTimeout(pressTimer));
                     btnGroup.appendChild(ukBtn);
 
                 } else {
@@ -297,9 +315,44 @@
                     subP.textContent = item.sub;
                 }
 
+                // UK 슬라이더 패널 (ENGLISH/ACTING만)
+                let ukPanel = null;
+                if (item.type === 'ENGLISH' || item.type === 'ACTING') {
+                    ukPanel = document.createElement('div');
+                    ukPanel.className = 'uk-panel mt-3 px-1';
+                    ukPanel.innerHTML = `
+                        <div class="bg-indigo-950/50 border border-indigo-500/20 rounded-xl p-3 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-indigo-300 font-bold tracking-widest">🇬🇧 UK 음성 조절</span>
+                                <button class="uk-play-btn text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-1 rounded-lg font-bold">▶ 재생</button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-400 w-8">속도</span>
+                                <input type="range" class="uk-rate flex-1" min="0.5" max="1.5" step="0.05" value="0.85">
+                                <span class="uk-rate-val text-[10px] text-indigo-300 w-7 text-right">0.85</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-400 w-8">높이</span>
+                                <input type="range" class="uk-pitch flex-1" min="0.5" max="2.0" step="0.05" value="0.9">
+                                <span class="uk-pitch-val text-[10px] text-indigo-300 w-7 text-right">0.9</span>
+                            </div>
+                        </div>
+                    `;
+                    const rateInput  = ukPanel.querySelector('.uk-rate');
+                    const pitchInput = ukPanel.querySelector('.uk-pitch');
+                    const rateVal    = ukPanel.querySelector('.uk-rate-val');
+                    const pitchVal   = ukPanel.querySelector('.uk-pitch-val');
+                    rateInput.addEventListener('input',  () => rateVal.textContent  = parseFloat(rateInput.value).toFixed(2));
+                    pitchInput.addEventListener('input', () => pitchVal.textContent = parseFloat(pitchInput.value).toFixed(2));
+                    ukPanel.querySelector('.uk-play-btn').addEventListener('click', () => {
+                        handleSpeakCustom(item.text, 'en-GB', parseFloat(rateInput.value), parseFloat(pitchInput.value));
+                    });
+                }
+
                 card.appendChild(header);
                 card.appendChild(textP);
                 card.appendChild(subP);
+                if (ukPanel) card.appendChild(ukPanel);
                 container.appendChild(card);
             });
         }
