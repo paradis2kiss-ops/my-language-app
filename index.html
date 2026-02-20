@@ -297,23 +297,18 @@
                 textP.className = 'text-lg font-bold leading-tight mb-3 tracking-tight text-white/90';
                 textP.textContent = `"${item.text}"`;
 
-                // 서브텍스트 - HISTORY는 클릭 토글
+                // 서브텍스트 - 모두 클릭 시 토글
                 const subP = document.createElement('p');
-                if (item.type === 'HISTORY') {
-                    subP.className = 'text-[11px] text-amber-400/60 font-medium leading-relaxed cursor-pointer select-none';
-                    subP.textContent = '🔍 키워드 보기';
-                    let revealed = false;
-                    subP.addEventListener('click', () => {
-                        revealed = !revealed;
-                        subP.textContent = revealed ? item.sub : '🔍 키워드 보기';
-                        subP.className = revealed
-                            ? 'text-[11px] text-slate-400 font-medium leading-relaxed cursor-pointer select-none'
-                            : 'text-[11px] text-amber-400/60 font-medium leading-relaxed cursor-pointer select-none';
-                    });
-                } else {
-                    subP.className = 'text-[11px] text-slate-400 font-medium leading-relaxed';
-                    subP.textContent = item.sub;
-                }
+                subP.className = 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
+                subP.textContent = '💬 설명 보기';
+                let revealed = false;
+                subP.addEventListener('click', () => {
+                    revealed = !revealed;
+                    subP.textContent = revealed ? item.sub : '💬 설명 보기';
+                    subP.className = revealed
+                        ? 'text-[11px] text-slate-400 font-medium leading-relaxed cursor-pointer select-none'
+                        : 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
+                });
 
                 // UK 슬라이더 패널 (ENGLISH/ACTING만)
                 let ukPanel = null;
