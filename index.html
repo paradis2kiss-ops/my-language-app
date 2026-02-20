@@ -12,6 +12,8 @@
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
         .bookmark-active { color: #facc15 !important; }
         #loader { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+        .voice-btn { transition: all 0.2s; white-space: nowrap; }
+        .voice-btn:active { transform: scale(0.9); }
     </style>
 </head>
 <body class="pb-32">
@@ -96,8 +98,8 @@
                     voice = voices.find(v => v.name === 'Google US English')
                           || voices.find(v => v.lang === 'en-US');
                 }
-                utterance.rate = 0.82;
-                utterance.pitch = 1.0;
+                utterance.rate = 0.85;
+                utterance.pitch = 0.9;
 
             } else if (l.startsWith('ja')) {
                 // Google 日本語만 존재 - rate/pitch 최대한 자연스럽게
@@ -110,8 +112,8 @@
                 // 보통화 우선
                 voice = voices.find(v => v.name === 'Google 普通话（中国大陆）')
                       || voices.find(v => v.lang === 'zh-CN');
-                utterance.rate = 0.85;
-                utterance.pitch = 0.9;
+                utterance.rate = 0.82;
+                utterance.pitch = 1.0;
 
             } else {
                 // 한국어: Google 우선, 없으면 Microsoft Heami
@@ -209,7 +211,7 @@
                     ];
                     langs.forEach(l => {
                         const b = document.createElement('button');
-                        b.className = `${l.bg} ${l.text} px-2 py-1 rounded-lg text-[10px] font-bold active:scale-90 transition-transform`;
+                        b.className = `voice-btn ${l.bg} ${l.text} px-2 py-1 rounded-lg text-[10px] font-bold`;
                         b.textContent = l.label;
                         b.addEventListener('click', () => handleSpeak(item.text, l.code));
                         btnGroup.appendChild(b);
