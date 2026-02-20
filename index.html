@@ -96,8 +96,8 @@
                     voice = voices.find(v => v.name === 'Google US English')
                           || voices.find(v => v.lang === 'en-US');
                 }
-                utterance.rate = 0.85;
-                utterance.pitch = 0.9;
+                utterance.rate = 0.82;
+                utterance.pitch = 1.0;
 
             } else if (l.startsWith('ja')) {
                 // Google 日本語만 존재 - rate/pitch 최대한 자연스럽게
@@ -200,14 +200,29 @@
                 bookmarkBtn.innerHTML = `<i class="fa-solid fa-star text-xs"></i>`;
                 bookmarkBtn.addEventListener('click', () => toggleBookmark(item, bookmarkBtn));
 
-                // 음성 버튼
-                const speakBtn = document.createElement('button');
-                speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
-                speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
-                speakBtn.addEventListener('click', () => handleSpeak(item.text, item.lang));
+                // 음성 버튼 - KANJI는 🇰🇷🇨🇳🇯🇵 3개, 나머지는 1개
+                if (item.type === 'KANJI') {
+                    const langs = [
+                        { label: '🇰🇷 훈', code: 'ko-KR', bg: 'bg-slate-700',      text: 'text-slate-300' },
+                        { label: '🇨🇳 中', code: 'zh-CN', bg: 'bg-red-900/30',     text: 'text-red-400' },
+                        { label: '🇯🇵 日', code: 'ja-JP', bg: 'bg-emerald-900/30', text: 'text-emerald-400' }
+                    ];
+                    langs.forEach(l => {
+                        const b = document.createElement('button');
+                        b.className = `${l.bg} ${l.text} px-2 py-1 rounded-lg text-[10px] font-bold active:scale-90 transition-transform`;
+                        b.textContent = l.label;
+                        b.addEventListener('click', () => handleSpeak(item.text, l.code));
+                        btnGroup.appendChild(b);
+                    });
+                } else {
+                    const speakBtn = document.createElement('button');
+                    speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
+                    speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
+                    speakBtn.addEventListener('click', () => handleSpeak(item.text, item.lang));
+                    btnGroup.appendChild(speakBtn);
+                }
 
                 btnGroup.appendChild(bookmarkBtn);
-                btnGroup.appendChild(speakBtn);
                 header.appendChild(typeLabel);
                 header.appendChild(btnGroup);
 
