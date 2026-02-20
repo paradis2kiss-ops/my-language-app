@@ -3,123 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>2026 Master Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .active-tab { border-bottom: 3px solid #60a5fa; color: #60a5fa; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
+        .glass-card:active { transform: scale(0.98); background: rgba(51, 65, 85, 0.8); }
+        .btn-play { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .nav-active { color: #60a5fa; position: relative; }
+        .nav-active::after { content: ''; position: absolute; bottom: -8px; width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; }
+        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .live-indicator { animation: pulse-soft 2s infinite; }
     </style>
 </head>
-<body class="bg-[#0f172a] text-slate-200 min-h-screen pb-20">
+<body class="text-slate-100 min-h-screen pb-24 selection:bg-blue-500/30">
 
-    <header class="p-6 pt-10 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-50">
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-            2026 Master Archive
-        </h1>
-        <p class="text-slate-400 text-sm mt-1" id="current-date"></p>
+    <header class="sticky top-0 z-50 p-6 pt-12 bg-[#0f172a]/80 backdrop-blur-xl">
+        <div class="flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">
+                    2026 Master <span class="text-blue-400">Archived</span>
+                </h1>
+                <p class="text-slate-500 text-sm mt-1 flex items-center">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 live-indicator"></span>
+                    <span id="current-date"></span>
+                </p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+                <i class="fa-solid fa-user text-xs text-slate-400"></i>
+            </div>
+        </div>
     </header>
 
-    <main class="px-5 space-y-6">
+    <main class="px-6 mt-4 space-y-8">
         
         <section>
-            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center">
-                <i class="fa-solid fa-sun mr-2 text-amber-400"></i> Morning Library (08:30)
-            </h2>
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] flex items-center">
+                    <i class="fa-solid fa-cloud-sun mr-2 text-blue-400"></i> Morning Library <span class="ml-2 text-slate-600 font-medium">08:30</span>
+                </h2>
+            </div>
             
-            <div class="glass rounded-2xl p-5 mb-4 relative overflow-hidden group">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold tracking-tighter">🇺🇸 ENGLISH (IH)</span>
-                    <button onclick="speak('Actually, Python is my go-to language for data analysis because of its extensive libraries like Pandas and Scikit-learn.', 'en-US')" 
-                            class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 active:scale-90 transition">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </button>
+            <div class="grid grid-cols-1 gap-4">
+                <div class="glass-card p-5 relative group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg">🇺🇸</span>
+                            <span class="text-[10px] font-bold text-blue-400 tracking-wider">ENGLISH IH</span>
+                        </div>
+                        <button onclick="speak('Actually, Python is my go-to language for data analysis because of its extensive libraries like Pandas and Scikit-learn.', 'en-US')" class="btn-play w-10 h-10 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-play text-xs text-white"></i>
+                        </button>
+                    </div>
+                    <p class="text-lg font-semibold leading-tight mb-2">"Actually, Python is my go-to language for data analysis..."</p>
+                    <p class="text-xs text-slate-500 font-medium">파이썬은 데이터 분석에 있어 가장 핵심적인 도구입니다.</p>
                 </div>
-                <p class="text-lg font-medium leading-relaxed mb-2 italic">"Actually, Python is my go-to language for data analysis..."</p>
-                <p class="text-sm text-slate-400">사실 파이썬은 판다스와 사이킷런 같은 방대한 라이브러리 덕분에 제가 데이터 분석에서 가장 즐겨 쓰는 언어입니다.</p>
-            </div>
 
-            <div class="glass rounded-2xl p-5 mb-4">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="px-2 py-1 rounded bg-red-500/20 text-red-400 text-[10px] font-bold tracking-tighter">🇨🇳 CHINESE (HSK 4)</span>
-                    <button onclick="speak('虽然这些数据很多，하지만 我们可以进行分析。', 'zh-CN')" 
-                            class="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-400 active:scale-90 transition">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="glass-card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm">🇨🇳</span>
+                            <button onclick="speak('虽然这些数据很多，但是我们可以进行分析。', 'zh-CN')" class="text-slate-400 hover:text-red-400"><i class="fa-solid fa-volume-high"></i></button>
+                        </div>
+                        <p class="text-sm font-bold mb-1 truncate">虽然这些数据很多...</p>
+                        <p class="text-[10px] text-slate-500">데이터가 많아도 분석 가능합니다.</p>
+                    </div>
+                    <div class="glass-card p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm">🇯🇵</span>
+                            <button onclick="speak('データ分析を担当しています。', 'ja-JP')" class="text-slate-400 hover:text-emerald-400"><i class="fa-solid fa-volume-high"></i></button>
+                        </div>
+                        <p class="text-sm font-bold mb-1 truncate">担当しています</p>
+                        <p class="text-[10px] text-slate-500">분석을 담당하고 있습니다.</p>
+                    </div>
                 </div>
-                <p class="text-xl font-bold leading-relaxed mb-2 tracking-wide">虽然这些数据很多，但是我们可以进行分析。</p>
-                <p class="text-sm text-slate-400">비록 데이터가 많을지라도, 우리는 분석을 진행할 수 있습니다.</p>
-            </div>
-
-            <div class="glass rounded-2xl p-5 mb-4 border-l-4 border-emerald-500/50">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-tighter">🇯🇵 JAPANESE (BIZ)</span>
-                    <button onclick="speak('データ分析を担当しています。IT資格の勉強も頑張っています。', 'ja-JP')" 
-                            class="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 active:scale-90 transition">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </button>
-                </div>
-                <p class="text-lg font-bold leading-relaxed mb-2">データ分析を担当(たんとう)しています。</p>
-                <p class="text-sm text-slate-400">데이터 분석을 담당하고 있습니다. (자격증 공부도 병행 중)</p>
             </div>
         </section>
 
-        <section class="pb-10">
-            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center">
-                <i class="fa-solid fa-moon mr-2 text-indigo-400"></i> Evening Archive (18:30)
+        <section>
+            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mb-5 flex items-center">
+                <i class="fa-solid fa-moon mr-2 text-indigo-400"></i> Evening Archive <span class="ml-2 text-slate-600 font-medium">18:30</span>
             </h2>
-            <div class="glass rounded-2xl p-5 bg-indigo-500/5 border-dashed border-indigo-500/30 border-2">
-                <p class="text-sm font-bold text-indigo-300 mb-2"><i class="fa-solid fa-book-open mr-1"></i> 오늘 자 오답노트 & 역사</p>
-                <ul class="text-sm text-slate-300 space-y-2">
-                    <li>• 한능검: 선사시대 ~ 고대 국가 기틀 정리</li>
-                    <li>• SQLP: 인덱스 컬럼 가공 시 Range Scan 불가 주의</li>
+            <div class="glass-card p-6 bg-indigo-500/5 border-indigo-500/20">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="p-2 bg-indigo-500/20 rounded-lg"><i class="fa-solid fa-pen-nib text-indigo-400 text-sm"></i></div>
+                    <span class="text-sm font-bold">오답 노트 & 동호회</span>
+                </div>
+                <ul class="space-y-3 text-xs text-slate-400">
+                    <li class="flex items-start"><span class="text-indigo-500 mr-2">•</span> <span>한능검: 선사시대 유물 및 국가 기틀 완벽 정리</span></li>
+                    <li class="flex items-start"><span class="text-indigo-500 mr-2">•</span> <span>SQLP: Index 가공 시 Range Scan 범위 제한 학습</span></li>
                 </ul>
             </div>
         </section>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-50">
-        <button class="text-blue-400 flex flex-col items-center space-y-1">
-            <i class="fa-solid fa-house text-lg"></i>
-            <span class="text-[10px]">Home</span>
-        </button>
-        <button class="text-slate-500 flex flex-col items-center space-y-1">
-            <i class="fa-solid fa-calendar-days text-lg"></i>
-            <span class="text-[10px]">History</span>
-        </button>
-        <button class="text-slate-500 flex flex-col items-center space-y-1">
-            <i class="fa-solid fa-pen-to-square text-lg"></i>
-            <span class="text-[10px]">Notes</span>
-        </button>
-        <button class="text-slate-500 flex flex-col items-center space-y-1">
-            <i class="fa-solid fa-gear text-lg"></i>
-            <span class="text-[10px]">Setting</span>
-        </button>
+    <nav class="fixed bottom-0 left-0 right-0 glass-card mx-6 my-6 p-4 flex justify-around items-center z-50">
+        <button class="nav-active"><i class="fa-solid fa-house-chimney"></i></button>
+        <button class="text-slate-600"><i class="fa-solid fa-chart-pie"></i></button>
+        <button class="text-slate-600"><i class="fa-solid fa-calendar"></i></button>
+        <button class="text-slate-600"><i class="fa-solid fa-gear"></i></button>
     </nav>
 
     <script>
-        // 날짜 표시
         const now = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        document.getElementById('current-date').innerText = now.toLocaleDateString('ko-KR', options);
+        document.getElementById('current-date').innerText = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
 
-        // TTS 함수
         function speak(text, lang) {
-            // 브라우저가 음성 합성 지원하는지 확인
-            if (!window.speechSynthesis) return;
-            
-            // 기존 재생 중인 음성 중단
             window.speechSynthesis.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
-            utterance.rate = 0.85; // 학습을 위해 약간 느리게
-            utterance.pitch = 1.0;
-            
-            // 특정 언어 보이스 설정 최적화
-            const voices = window.speechSynthesis.getVoices();
+            utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
     </script>
