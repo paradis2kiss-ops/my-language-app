@@ -183,9 +183,34 @@
         }
 
         function renderRandom() {
-            const shuffled = [...allData].sort(() => Math.random() - 0.5);
+            // TYPE별 1개씩 보장 (ENGLISH, CHINESE, JAPANESE, HISTORY, DATA/KANJI 중 5개)
+            const types = ['ENGLISH', 'CHINESE', 'JAPANESE', 'HISTORY', 'DATA', 'KANJI', 'ACTING'];
+            const picked = [];
+            const usedTypes = new Set();
+
+            // 1순위: 각 TYPE에서 랜덤 1개씩 추출
+            types.forEach(type => {
+                const pool = allData.filter(d => d.type === type);
+                if (pool.length > 0) {
+                    const item = pool[Math.floor(Math.random() * pool.length)];
+                    if (!usedTypes.has(type)) {
+                        picked.push(item);
+                        usedTypes.add(type);
+                    }
+                }
+            });
+
+            // 5개로 맞추기 (부족하면 나머지에서 채움)
+            if (picked.length < 5) {
+                const rest = allData.filter(d => !picked.includes(d));
+                const shuffled = rest.sort(() => Math.random() - 0.5);
+                while (picked.length < 5 && shuffled.length > 0) {
+                    picked.push(shuffled.shift());
+                }
+            }
+
             document.getElementById('engine-status').innerText = "SYSTEM: RANDOM MODE";
-            renderCards(shuffled.slice(0, 4));
+            renderCards(picked.slice(0, 5).sort(() => Math.random() - 0.5));
         }
 
         // ✅ 카드 렌더링: innerHTML 대신 addEventListener 사용 (특수문자 onclick 파괴 방지)
@@ -238,17 +263,17 @@
                     });
 
                 } else if (item.type === 'ENGLISH' || item.type === 'ACTING') {
-                    // 🇺🇸 US 버튼
+                    // 🇺🇸 US / 🇬🇧 UK 즉시 재생 버튼 2개
                     const usBtn = document.createElement('button');
                     usBtn.className = 'voice-btn bg-blue-900/30 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     usBtn.textContent = '🇺🇸 US';
                     usBtn.addEventListener('click', () => handleSpeak(item.text, 'en-US'));
                     btnGroup.appendChild(usBtn);
 
-                    // 🇬🇧 UK 버튼 (클릭 시 슬라이더 패널 토글)
                     const ukBtn = document.createElement('button');
                     ukBtn.className = 'voice-btn bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-lg text-[10px] font-bold';
-                    ukBtn.textContent = '🇬🇧 UK ⚙';
+                    ukBtn.textContent = '🇬🇧 UK';
+                    ukBtn.addEventListener('click', () => handleSpeakCustom(item.text, 'en-GB', 0.85, 0.9));
                     btnGroup.appendChild(ukBtn);
 
                 } else {
@@ -287,54 +312,9 @@
                     subP.textContent = item.sub;
                 }
 
-                // UK 슬라이더 패널 (ENGLISH/ACTING만)
-                let ukPanel = null;
-                if (item.type === 'ENGLISH' || item.type === 'ACTING') {
-                    ukPanel = document.createElement('div');
-                    ukPanel.className = 'uk-panel mt-3 px-1';
-                    ukPanel.innerHTML = `
-                        <div class="bg-indigo-950/50 border border-indigo-500/20 rounded-xl p-3 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-indigo-300 font-bold tracking-widest">🇬🇧 UK 음성 조절</span>
-                                <button class="uk-play-btn text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-1 rounded-lg font-bold">▶ 재생</button>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-slate-400 w-10">속도</span>
-                                <input type="range" class="uk-rate" min="0.5" max="1.5" step="0.05" value="0.82">
-                                <span class="uk-rate-val text-[10px] text-indigo-300 w-6 text-right">0.82</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-slate-400 w-10">높이</span>
-                                <input type="range" class="uk-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
-                                <span class="uk-pitch-val text-[10px] text-indigo-300 w-6 text-right">1.0</span>
-                            </div>
-                        </div>
-                    `;
-
-                    // 슬라이더 실시간 값 표시
-                    const rateInput  = ukPanel.querySelector('.uk-rate');
-                    const pitchInput = ukPanel.querySelector('.uk-pitch');
-                    const rateVal    = ukPanel.querySelector('.uk-rate-val');
-                    const pitchVal   = ukPanel.querySelector('.uk-pitch-val');
-                    rateInput.addEventListener('input',  () => rateVal.textContent  = parseFloat(rateInput.value).toFixed(2));
-                    pitchInput.addEventListener('input', () => pitchVal.textContent = parseFloat(pitchInput.value).toFixed(2));
-
-                    // 재생 버튼
-                    ukPanel.querySelector('.uk-play-btn').addEventListener('click', () => {
-                        handleSpeakCustom(item.text, 'en-GB', parseFloat(rateInput.value), parseFloat(pitchInput.value));
-                    });
-
-                    // UK 버튼 토글
-                    const ukBtnRef = btnGroup.querySelector('button:last-of-type');
-                    ukBtnRef.addEventListener('click', () => {
-                        ukPanel.classList.toggle('open');
-                    });
-                }
-
                 card.appendChild(header);
                 card.appendChild(textP);
                 card.appendChild(subP);
-                if (ukPanel) card.appendChild(ukPanel);
                 container.appendChild(card);
             });
         }
