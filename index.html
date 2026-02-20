@@ -183,34 +183,19 @@
         }
 
         function renderRandom() {
-            // TYPE별 1개씩 보장 (ENGLISH, CHINESE, JAPANESE, HISTORY, DATA/KANJI 중 5개)
-            const types = ['ENGLISH', 'CHINESE', 'JAPANESE', 'HISTORY', 'DATA', 'KANJI', 'ACTING'];
+            // 반드시 6가지 TYPE 각 1개씩 고정
+            const requiredTypes = ['ENGLISH', 'JAPANESE', 'CHINESE', 'KANJI', 'DATA', 'HISTORY'];
             const picked = [];
-            const usedTypes = new Set();
 
-            // 1순위: 각 TYPE에서 랜덤 1개씩 추출
-            types.forEach(type => {
+            requiredTypes.forEach(type => {
                 const pool = allData.filter(d => d.type === type);
                 if (pool.length > 0) {
-                    const item = pool[Math.floor(Math.random() * pool.length)];
-                    if (!usedTypes.has(type)) {
-                        picked.push(item);
-                        usedTypes.add(type);
-                    }
+                    picked.push(pool[Math.floor(Math.random() * pool.length)]);
                 }
             });
 
-            // 5개로 맞추기 (부족하면 나머지에서 채움)
-            if (picked.length < 5) {
-                const rest = allData.filter(d => !picked.includes(d));
-                const shuffled = rest.sort(() => Math.random() - 0.5);
-                while (picked.length < 5 && shuffled.length > 0) {
-                    picked.push(shuffled.shift());
-                }
-            }
-
             document.getElementById('engine-status').innerText = "SYSTEM: RANDOM MODE";
-            renderCards(picked.slice(0, 5).sort(() => Math.random() - 0.5));
+            renderCards(picked.sort(() => Math.random() - 0.5));
         }
 
         // ✅ 카드 렌더링: innerHTML 대신 addEventListener 사용 (특수문자 onclick 파괴 방지)
