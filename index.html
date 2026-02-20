@@ -14,6 +14,10 @@
         #loader { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
         .voice-btn { transition: all 0.2s; white-space: nowrap; }
         .voice-btn:active { transform: scale(0.9); }
+        .uk-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease; opacity: 0; }
+        .uk-panel.open { max-height: 120px; opacity: 1; }
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(99,102,241,0.3); outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #818cf8; cursor: pointer; }
     </style>
 </head>
 <body class="pb-32">
@@ -98,8 +102,8 @@
                     voice = voices.find(v => v.name === 'Google US English')
                           || voices.find(v => v.lang === 'en-US');
                 }
-                utterance.rate = 0.85;
-                utterance.pitch = 0.9;
+                utterance.rate = 0.82;
+                utterance.pitch = 1.0;
 
             } else if (l.startsWith('ja')) {
                 // Google 日本語만 존재 - rate/pitch 최대한 자연스럽게
@@ -127,6 +131,21 @@
             if (voice) utterance.voice = voice;
             utterance.lang = voice ? voice.lang : l;
             utterance.onerror = (e) => console.error('TTS Error:', e.error, '|', lang, '|', text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ✅ UK 슬라이더용 커스텀 재생 함수
+        function handleSpeakCustom(text, lang, rate, pitch) {
+            window.speechSynthesis.cancel();
+            const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = voices.find(v => v.name === 'Google UK English Female')
+                        || voices.find(v => v.lang === 'en-GB');
+            if (voice) utterance.voice = voice;
+            utterance.lang = 'en-GB';
+            utterance.rate  = rate;
+            utterance.pitch = pitch;
+            utterance.onerror = (e) => console.error('TTS Custom Error:', e.error);
             window.speechSynthesis.speak(utterance);
         }
 
@@ -202,12 +221,13 @@
                 bookmarkBtn.innerHTML = `<i class="fa-solid fa-star text-xs"></i>`;
                 bookmarkBtn.addEventListener('click', () => toggleBookmark(item, bookmarkBtn));
 
-                // 음성 버튼 - KANJI는 🇰🇷🇨🇳🇯🇵 3개, 나머지는 1개
+                // 음성 버튼 분기
                 if (item.type === 'KANJI') {
+                    // 음·훈 / 中발음 / 日발음
                     const langs = [
-                        { label: '🇰🇷 훈', code: 'ko-KR', bg: 'bg-slate-700',      text: 'text-slate-300' },
-                        { label: '🇨🇳 中', code: 'zh-CN', bg: 'bg-red-900/30',     text: 'text-red-400' },
-                        { label: '🇯🇵 日', code: 'ja-JP', bg: 'bg-emerald-900/30', text: 'text-emerald-400' }
+                        { label: '음·훈', code: 'ko-KR', bg: 'bg-slate-700',      text: 'text-slate-300' },
+                        { label: '中 발음', code: 'zh-CN', bg: 'bg-red-900/30',   text: 'text-red-400' },
+                        { label: '日 발음', code: 'ja-JP', bg: 'bg-emerald-900/30', text: 'text-emerald-400' }
                     ];
                     langs.forEach(l => {
                         const b = document.createElement('button');
@@ -216,7 +236,23 @@
                         b.addEventListener('click', () => handleSpeak(item.text, l.code));
                         btnGroup.appendChild(b);
                     });
+
+                } else if (item.type === 'ENGLISH' || item.type === 'ACTING') {
+                    // 🇺🇸 US 버튼
+                    const usBtn = document.createElement('button');
+                    usBtn.className = 'voice-btn bg-blue-900/30 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold';
+                    usBtn.textContent = '🇺🇸 US';
+                    usBtn.addEventListener('click', () => handleSpeak(item.text, 'en-US'));
+                    btnGroup.appendChild(usBtn);
+
+                    // 🇬🇧 UK 버튼 (클릭 시 슬라이더 패널 토글)
+                    const ukBtn = document.createElement('button');
+                    ukBtn.className = 'voice-btn bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-lg text-[10px] font-bold';
+                    ukBtn.textContent = '🇬🇧 UK ⚙';
+                    btnGroup.appendChild(ukBtn);
+
                 } else {
+                    // 일반 재생 버튼 1개
                     const speakBtn = document.createElement('button');
                     speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
                     speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
@@ -233,14 +269,72 @@
                 textP.className = 'text-lg font-bold leading-tight mb-3 tracking-tight text-white/90';
                 textP.textContent = `"${item.text}"`;
 
-                // 서브텍스트
+                // 서브텍스트 - HISTORY는 클릭 토글
                 const subP = document.createElement('p');
-                subP.className = 'text-[11px] text-slate-400 font-medium leading-relaxed';
-                subP.textContent = item.sub;
+                if (item.type === 'HISTORY') {
+                    subP.className = 'text-[11px] text-amber-400/60 font-medium leading-relaxed cursor-pointer select-none';
+                    subP.textContent = '🔍 키워드 보기';
+                    let revealed = false;
+                    subP.addEventListener('click', () => {
+                        revealed = !revealed;
+                        subP.textContent = revealed ? item.sub : '🔍 키워드 보기';
+                        subP.className = revealed
+                            ? 'text-[11px] text-slate-400 font-medium leading-relaxed cursor-pointer select-none'
+                            : 'text-[11px] text-amber-400/60 font-medium leading-relaxed cursor-pointer select-none';
+                    });
+                } else {
+                    subP.className = 'text-[11px] text-slate-400 font-medium leading-relaxed';
+                    subP.textContent = item.sub;
+                }
+
+                // UK 슬라이더 패널 (ENGLISH/ACTING만)
+                let ukPanel = null;
+                if (item.type === 'ENGLISH' || item.type === 'ACTING') {
+                    ukPanel = document.createElement('div');
+                    ukPanel.className = 'uk-panel mt-3 px-1';
+                    ukPanel.innerHTML = `
+                        <div class="bg-indigo-950/50 border border-indigo-500/20 rounded-xl p-3 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-indigo-300 font-bold tracking-widest">🇬🇧 UK 음성 조절</span>
+                                <button class="uk-play-btn text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-1 rounded-lg font-bold">▶ 재생</button>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-400 w-10">속도</span>
+                                <input type="range" class="uk-rate" min="0.5" max="1.5" step="0.05" value="0.82">
+                                <span class="uk-rate-val text-[10px] text-indigo-300 w-6 text-right">0.82</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-slate-400 w-10">높이</span>
+                                <input type="range" class="uk-pitch" min="0.5" max="2.0" step="0.05" value="1.0">
+                                <span class="uk-pitch-val text-[10px] text-indigo-300 w-6 text-right">1.0</span>
+                            </div>
+                        </div>
+                    `;
+
+                    // 슬라이더 실시간 값 표시
+                    const rateInput  = ukPanel.querySelector('.uk-rate');
+                    const pitchInput = ukPanel.querySelector('.uk-pitch');
+                    const rateVal    = ukPanel.querySelector('.uk-rate-val');
+                    const pitchVal   = ukPanel.querySelector('.uk-pitch-val');
+                    rateInput.addEventListener('input',  () => rateVal.textContent  = parseFloat(rateInput.value).toFixed(2));
+                    pitchInput.addEventListener('input', () => pitchVal.textContent = parseFloat(pitchInput.value).toFixed(2));
+
+                    // 재생 버튼
+                    ukPanel.querySelector('.uk-play-btn').addEventListener('click', () => {
+                        handleSpeakCustom(item.text, 'en-GB', parseFloat(rateInput.value), parseFloat(pitchInput.value));
+                    });
+
+                    // UK 버튼 토글
+                    const ukBtnRef = btnGroup.querySelector('button:last-of-type');
+                    ukBtnRef.addEventListener('click', () => {
+                        ukPanel.classList.toggle('open');
+                    });
+                }
 
                 card.appendChild(header);
                 card.appendChild(textP);
                 card.appendChild(subP);
+                if (ukPanel) card.appendChild(ukPanel);
                 container.appendChild(card);
             });
         }
