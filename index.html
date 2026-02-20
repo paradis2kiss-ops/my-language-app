@@ -3,114 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>2026 Master Dashboard</title>
+    <title>2026 Master Cloud Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
-        .glass-card:active { transform: scale(0.98); background: rgba(51, 65, 85, 0.8); }
-        .btn-play { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
-        .nav-active { color: #60a5fa; position: relative; }
-        .nav-active::after { content: ''; position: absolute; bottom: -8px; width: 4px; height: 4px; background: #60a5fa; border-radius: 50%; }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .live-indicator { animation: pulse-soft 2s infinite; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #0f172a; color: white; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: transform 0.2s; }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen pb-24 selection:bg-blue-500/30">
-
-    <header class="sticky top-0 z-50 p-6 pt-12 bg-[#0f172a]/80 backdrop-blur-xl">
-        <div class="flex justify-between items-end">
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tight">
-                    2026 Master <span class="text-blue-400">Archived</span>
-                </h1>
-                <p class="text-slate-500 text-sm mt-1 flex items-center">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2 live-indicator"></span>
-                    <span id="current-date"></span>
-                </p>
-            </div>
-            <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                <i class="fa-solid fa-user text-xs text-slate-400"></i>
-            </div>
-        </div>
+<body class="pb-24">
+    <header class="p-8 pt-12">
+        <h1 class="text-3xl font-extrabold tracking-tighter italic">2026 Master <span class="text-blue-400">Cloud</span></h1>
+        <p class="text-slate-500 text-xs mt-2 font-mono" id="engine-status">CONNECTED TO GOOGLE SHEETS</p>
     </header>
 
-    <main class="px-6 mt-4 space-y-8">
-        
-        <section>
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] flex items-center">
-                    <i class="fa-solid fa-cloud-sun mr-2 text-blue-400"></i> Morning Library <span class="ml-2 text-slate-600 font-medium">08:30</span>
-                </h2>
-            </div>
-            
-            <div class="grid grid-cols-1 gap-4">
-                <div class="glass-card p-5 relative group">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-lg">🇺🇸</span>
-                            <span class="text-[10px] font-bold text-blue-400 tracking-wider">ENGLISH IH</span>
-                        </div>
-                        <button onclick="speak('Actually, Python is my go-to language for data analysis because of its extensive libraries like Pandas and Scikit-learn.', 'en-US')" class="btn-play w-10 h-10 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-play text-xs text-white"></i>
-                        </button>
-                    </div>
-                    <p class="text-lg font-semibold leading-tight mb-2">"Actually, Python is my go-to language for data analysis..."</p>
-                    <p class="text-xs text-slate-500 font-medium">파이썬은 데이터 분석에 있어 가장 핵심적인 도구입니다.</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="glass-card p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-sm">🇨🇳</span>
-                            <button onclick="speak('虽然这些数据很多，但是我们可以进行分析。', 'zh-CN')" class="text-slate-400 hover:text-red-400"><i class="fa-solid fa-volume-high"></i></button>
-                        </div>
-                        <p class="text-sm font-bold mb-1 truncate">虽然这些数据很多...</p>
-                        <p class="text-[10px] text-slate-500">데이터가 많아도 분석 가능합니다.</p>
-                    </div>
-                    <div class="glass-card p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-sm">🇯🇵</span>
-                            <button onclick="speak('データ分析を担当しています。', 'ja-JP')" class="text-slate-400 hover:text-emerald-400"><i class="fa-solid fa-volume-high"></i></button>
-                        </div>
-                        <p class="text-sm font-bold mb-1 truncate">担当しています</p>
-                        <p class="text-[10px] text-slate-500">분석을 담당하고 있습니다.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section>
-            <h2 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mb-5 flex items-center">
-                <i class="fa-solid fa-moon mr-2 text-indigo-400"></i> Evening Archive <span class="ml-2 text-slate-600 font-medium">18:30</span>
-            </h2>
-            <div class="glass-card p-6 bg-indigo-500/5 border-indigo-500/20">
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-2 bg-indigo-500/20 rounded-lg"><i class="fa-solid fa-pen-nib text-indigo-400 text-sm"></i></div>
-                    <span class="text-sm font-bold">오답 노트 & 동호회</span>
-                </div>
-                <ul class="space-y-3 text-xs text-slate-400">
-                    <li class="flex items-start"><span class="text-indigo-500 mr-2">•</span> <span>한능검: 선사시대 유물 및 국가 기틀 완벽 정리</span></li>
-                    <li class="flex items-start"><span class="text-indigo-500 mr-2">•</span> <span>SQLP: Index 가공 시 Range Scan 범위 제한 학습</span></li>
-                </ul>
-            </div>
-        </section>
+    <main id="main-container" class="px-6 space-y-6">
+        <div id="loader" class="text-center py-20 text-slate-600 font-bold tracking-widest animate-pulse">FETCHING CLOUD DATA...</div>
     </main>
 
-    <nav class="fixed bottom-0 left-0 right-0 glass-card mx-6 my-6 p-4 flex justify-around items-center z-50">
-        <button class="nav-active"><i class="fa-solid fa-house-chimney"></i></button>
-        <button class="text-slate-600"><i class="fa-solid fa-chart-pie"></i></button>
-        <button class="text-slate-600"><i class="fa-solid fa-calendar"></i></button>
-        <button class="text-slate-600"><i class="fa-solid fa-gear"></i></button>
-    </nav>
+    <button onclick="location.reload()" class="fixed bottom-28 right-6 w-14 h-14 bg-blue-600 rounded-full shadow-2xl flex items-center justify-center active:rotate-180 transition duration-500">
+        <i class="fa-solid fa-rotate text-white text-xl"></i>
+    </button>
 
     <script>
-        const now = new Date();
-        document.getElementById('current-date').innerText = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' }) + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+        // 여기에 구글 시트에서 복사한 CSV URL을 넣으세요!
+        const SHEET_CSV_URL = '여기에_복사한_URL을_붙여넣으세요';
+
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                const csvData = await response.text();
+                const rows = csvData.split('\n').slice(1); // 헤더 제외
+
+                const db = rows.map(row => {
+                    const [type, text, sub, lang, color] = row.split(',');
+                    return { type, text, sub, lang, color: color?.trim() || 'slate' };
+                }).filter(item => item.text); // 빈 줄 방지
+
+                // 셔플 알고리즘
+                db.sort(() => Math.random() - 0.5);
+
+                const container = document.getElementById('main-container');
+                container.innerHTML = ''; 
+
+                db.slice(0, 4).forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = `glass-card p-6 border-l-4 border-${item.color}-500/50`;
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] font-black tracking-widest text-${item.color}-400 uppercase">${item.type}</span>
+                            <button onclick="speak(\`${item.text}\`, '${item.lang}')" class="w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                        <p class="text-lg font-bold leading-tight mb-2 tracking-tight">"${item.text}"</p>
+                        <p class="text-[11px] text-slate-500 font-medium">${item.sub}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                document.getElementById('loader').innerText = "CONFIG ERROR: CHECK SHEET URL";
+            }
+        }
 
         function speak(text, lang) {
             window.speechSynthesis.cancel();
@@ -119,6 +74,8 @@
             utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
+
+        fetchSheetData();
     </script>
 </body>
 </html>
