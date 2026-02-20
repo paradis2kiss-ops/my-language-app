@@ -111,14 +111,31 @@
         }
 
         function speak(text, lang) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang || 'en-US';
-            utterance.rate = 0.9;
-            window.speechSynthesis.speak(utterance);
-        }
+    window.speechSynthesis.cancel(); // 이전 음성 취소
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // 브라우저의 목소리 목록 가져오기
+    const voices = window.speechSynthesis.getVoices();
+    
+    if (lang === 'en-GB') {
+        // 엠마 스톤 스타일 (영국 여성) 찾기
+        const emmaVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) 
+                         || voices.find(v => v.lang === 'en-GB');
+        if (emmaVoice) utterance.voice = emmaVoice;
+        utterance.rate = 0.85; 
+        utterance.pitch = 0.9; 
+    } else {
+        utterance.lang = lang || 'en-US';
+        utterance.rate = 0.9;
+    }
+    
+    window.speechSynthesis.speak(utterance);
+}
 
-        fetchSheetData();
+// 중요: 목소리 목록 로딩 보장
+window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+};
     </script>
 </body>
 </html>
