@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026 way up</title>
+    <title>2026 Master Engine V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -95,4 +95,62 @@
                             <button onclick="toggleBookmark('${encodeURIComponent(JSON.stringify(item))}', this)" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}">
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
-                            <button onclick="handle
+                            <button onclick="handleSpeak(\`${item.text.replace(/`/g, '\\`')}\`, '${item.lang}')" class="w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform">
+                                <i class="fa-solid fa-play"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-lg font-bold leading-tight mb-3 tracking-tight text-white/90">"${item.text}"</p>
+                    <p class="text-[11px] text-slate-400 font-medium leading-relaxed">${item.sub}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // [북마크 로직]
+        function toggleBookmark(itemStr, btn) {
+            const item = JSON.parse(decodeURIComponent(itemStr));
+            const index = bookmarks.findIndex(b => b.text === item.text);
+            if (index > -1) {
+                bookmarks.splice(index, 1);
+                btn.classList.remove('bookmark-active');
+                btn.classList.add('text-slate-500');
+            } else {
+                bookmarks.push(item);
+                btn.classList.add('bookmark-active');
+                btn.classList.remove('text-slate-500');
+            }
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        }
+
+        function toggleBookmarkView() {
+            if (bookmarks.length === 0) { alert("저장된 문장이 없습니다!"); return; }
+            document.getElementById('engine-status').innerText = "SYSTEM: BOOKMARKS";
+            renderCards(bookmarks);
+        }
+
+        // [음성 엔진] 엠마 스톤 스타일 (en-GB) 최적화
+        function handleSpeak(text, lang) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+            
+            if (lang === 'en-GB') {
+                const emmaVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) 
+                                 || voices.find(v => v.lang === 'en-GB');
+                if (emmaVoice) utterance.voice = emmaVoice;
+                utterance.rate = 0.85; 
+                utterance.pitch = 0.9; 
+            } else {
+                utterance.lang = lang || 'en-US';
+                utterance.rate = 0.9;
+            }
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 초기 실행 및 목소리 로드 대기
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        fetchSheetData();
+    </script>
+</body>
+</html>
