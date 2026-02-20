@@ -3,351 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
-    <title>WAAAY-UP</title>
+    <title>2026 Master Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=Montserrat:wght@800&display=swap');
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background: linear-gradient(to bottom, #a18cd1 0%, #fbc2eb 100%);
-            color: #fff;
-            -webkit-tap-highlight-color: transparent;
-            min-height: 100vh;
-            padding-bottom: 50px;
-            user-select: none; -webkit-user-select: none;
-        }
-        .main-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: radial-gradient(circle at 50% 10%, #1a1a2e, #16213e, #0f3460);
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px);
-            border-radius: 20px; padding: 20px; margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-        .lang-tag {
-            display: inline-block; padding: 5px 12px; border-radius: 20px;
-            font-size: 11px; font-weight: bold; margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3);
-        }
-        .study-img {
-            width: 100%; height: 200px; border-radius: 15px; margin-bottom: 20px;
-            background-size: cover; background-position: center;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            position: relative;
-        }
-        .img-caption {
-            position: absolute; bottom: 15px; left: 15px; font-size: 16px; font-weight: 800;
-            font-family: 'Montserrat', sans-serif;
-            color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10;
-            font-style: italic;
-        }
-        .progress-bar-bg { background: rgba(255,255,255,0.1); height: 6px; border-radius: 10px; overflow: hidden; }
-        .progress-bar-fill { background: linear-gradient(90deg, #00c6ff, #0072ff); height: 100%; width: 0%; transition: 0.5s; }
-        h1.app-title { font-family: 'Montserrat', sans-serif; letter-spacing: -1px; }
-        .check-mark { transition: opacity 0.3s; }
-        
-        /* 버튼 눌림 효과 */
-        .speak-btn {
-            background: rgba(255,255,255,0.2); width: 44px; height: 44px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            margin-right: 12px; cursor: pointer; transition: 0.1s;
-            border: 1px solid rgba(255,255,255,0.3); font-size: 20px;
-        }
-        .speak-btn:active, .speak-btn.playing { 
-            transform: scale(0.9); 
-            background: #3b82f6; 
-            border-color: #60a5fa;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .active-tab { border-bottom: 3px solid #60a5fa; color: #60a5fa; }
     </style>
 </head>
-<body class="p-5 max-w-md mx-auto relative">
-    <div class="main-bg"></div>
+<body class="bg-[#0f172a] text-slate-200 min-h-screen pb-20">
 
-    <header class="mb-8 text-center pt-4">
-        <h1 class="app-title text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-blue-400 italic" style="text-shadow: 0 0 30px rgba(0,198,255,0.5);">
-            WAAAY-UP
+    <header class="p-6 pt-10 sticky top-0 bg-[#0f172a]/80 backdrop-blur-md z-50">
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+            2026 Master Archive
         </h1>
-        <p class="text-blue-100 text-[10px] mt-2 font-bold tracking-[0.5em] uppercase">LIMITLESS : POTENTIAL</p>
-        <div class="mt-4 inline-block px-4 py-1 rounded-full bg-white/10 text-xs text-blue-200 border border-white/20">
-            📅 <span id="current-date">로딩 중...</span>
-        </div>
+        <p class="text-slate-400 text-sm mt-1" id="current-date"></p>
     </header>
 
-    <div id="dynamic-content">
-        <div class="card text-center py-10"><p>로딩 중... 🚀</p></div>
-    </div>
+    <main class="px-5 space-y-6">
+        
+        <section>
+            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center">
+                <i class="fa-solid fa-sun mr-2 text-amber-400"></i> Morning Library (08:30)
+            </h2>
+            
+            <div class="glass rounded-2xl p-5 mb-4 relative overflow-hidden group">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold tracking-tighter">🇺🇸 ENGLISH (IH)</span>
+                    <button onclick="speak('Actually, Python is my go-to language for data analysis because of its extensive libraries like Pandas and Scikit-learn.', 'en-US')" 
+                            class="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 active:scale-90 transition">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="text-lg font-medium leading-relaxed mb-2 italic">"Actually, Python is my go-to language for data analysis..."</p>
+                <p class="text-sm text-slate-400">사실 파이썬은 판다스와 사이킷런 같은 방대한 라이브러리 덕분에 제가 데이터 분석에서 가장 즐겨 쓰는 언어입니다.</p>
+            </div>
+
+            <div class="glass rounded-2xl p-5 mb-4">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="px-2 py-1 rounded bg-red-500/20 text-red-400 text-[10px] font-bold tracking-tighter">🇨🇳 CHINESE (HSK 4)</span>
+                    <button onclick="speak('虽然这些数据很多，하지만 我们可以进行分析。', 'zh-CN')" 
+                            class="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-400 active:scale-90 transition">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="text-xl font-bold leading-relaxed mb-2 tracking-wide">虽然这些数据很多，但是我们可以进行分析。</p>
+                <p class="text-sm text-slate-400">비록 데이터가 많을지라도, 우리는 분석을 진행할 수 있습니다.</p>
+            </div>
+
+            <div class="glass rounded-2xl p-5 mb-4 border-l-4 border-emerald-500/50">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-tighter">🇯🇵 JAPANESE (BIZ)</span>
+                    <button onclick="speak('データ分析を担当しています。IT資格の勉強も頑張っています。', 'ja-JP')" 
+                            class="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 active:scale-90 transition">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="text-lg font-bold leading-relaxed mb-2">データ分析を担当(たんとう)しています。</p>
+                <p class="text-sm text-slate-400">데이터 분석을 담당하고 있습니다. (자격증 공부도 병행 중)</p>
+            </div>
+        </section>
+
+        <section class="pb-10">
+            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4 flex items-center">
+                <i class="fa-solid fa-moon mr-2 text-indigo-400"></i> Evening Archive (18:30)
+            </h2>
+            <div class="glass rounded-2xl p-5 bg-indigo-500/5 border-dashed border-indigo-500/30 border-2">
+                <p class="text-sm font-bold text-indigo-300 mb-2"><i class="fa-solid fa-book-open mr-1"></i> 오늘 자 오답노트 & 역사</p>
+                <ul class="text-sm text-slate-300 space-y-2">
+                    <li>• 한능검: 선사시대 ~ 고대 국가 기틀 정리</li>
+                    <li>• SQLP: 인덱스 컬럼 가공 시 Range Scan 불가 주의</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3 flex justify-between items-center z-50">
+        <button class="text-blue-400 flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px]">Home</span>
+        </button>
+        <button class="text-slate-500 flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-calendar-days text-lg"></i>
+            <span class="text-[10px]">History</span>
+        </button>
+        <button class="text-slate-500 flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-pen-to-square text-lg"></i>
+            <span class="text-[10px]">Notes</span>
+        </button>
+        <button class="text-slate-500 flex flex-col items-center space-y-1">
+            <i class="fa-solid fa-gear text-lg"></i>
+            <span class="text-[10px]">Setting</span>
+        </button>
+    </nav>
 
     <script>
-       // iOS Safari speechSynthesis 버그 대응: 주기적 resume
-let _iosKeepAlive = null;
+        // 날짜 표시
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('current-date').innerText = now.toLocaleDateString('ko-KR', options);
 
-function speak(text, type, btnElement) {
-    const synth = window.speechSynthesis;
-
-    if (btnElement) {
-        btnElement.classList.add('playing');
-        setTimeout(() => btnElement.classList.remove('playing'), 200);
-    }
-
-    // ① 기존 keepAlive 타이머 제거
-    if (_iosKeepAlive) clearInterval(_iosKeepAlive);
-    
-    // ② 강제 종료 후 충분한 딜레이
-    synth.cancel();
-
-    setTimeout(() => {
-        // ③ voices 재확인 (비동기 로딩 대응)
-        let currentVoices = synth.getVoices();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        let selectedVoice = null;
-
-        if (type === 'english') {
-            utterance.lang = 'en-US';
-            selectedVoice = currentVoices.find(v => v.lang === 'en-US' && v.localService);
-            if (!selectedVoice) selectedVoice = currentVoices.find(v => v.lang.startsWith('en'));
-        } else if (type === 'chinese' || (type === 'shadowing' && /[\u3400-\u9FBF]/.test(text))) {
-            utterance.lang = 'zh-CN';
-            selectedVoice = currentVoices.find(v => v.lang === 'zh-CN');
-            if (!selectedVoice) selectedVoice = currentVoices.find(v => v.lang.startsWith('zh'));
-        } else if (type === 'japanese') {
-            utterance.lang = 'ja-JP';
-            selectedVoice = currentVoices.find(v => v.lang.startsWith('ja'));
-        }
-
-        if (selectedVoice) utterance.voice = selectedVoice;
-        utterance.rate = (type === 'chinese') ? 0.8 : 0.9;
-
-        // ④ iOS 핵심 수정: 250ms마다 resume() 호출로 suspended 방지
-        utterance.onstart = () => {
-            _iosKeepAlive = setInterval(() => {
-                if (synth.speaking && synth.paused) {
-                    synth.resume();
-                }
-            }, 250);
-        };
-
-        utterance.onend = () => {
-            if (_iosKeepAlive) clearInterval(_iosKeepAlive);
-        };
-
-        utterance.onerror = () => {
-            if (_iosKeepAlive) clearInterval(_iosKeepAlive);
-        };
-
-        synth.speak(utterance);
-
-        // ⑤ iOS 15+ 추가 버그: speak 직후 resume 필요
-        setTimeout(() => { if (synth.paused) synth.resume(); }, 100);
-
-    }, 150); // 50ms → 150ms로 증가
-}
-
-        const studyPlan = {
-            "2026-02-18": {
-                type: "english",
-                title: "LC 워밍업: 잘 들리나요?",
-                image: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=800&auto=format&fit=crop",
-                caption: "Beyond the Limit", 
-                items: [
-                    { text: "Can you hear me clearly?", sub: "제 말이 잘 들리시나요?" },
-                    { text: "I'm looking forward to working with you.", sub: "함께 일하게 되어 기대됩니다." },
-                    { text: "Let's get started right away.", sub: "지금 바로 시작합시다." }
-                ]
-            },
-            "2026-02-19": {
-                type: "chinese",
-                title: "HSK 3급: 일상 동사",
-                image: "https://images.unsplash.com/photo-1525286354093-272e27f0f624?q=80&w=800&auto=format&fit=crop",
-                caption: "Start Small, Dream Big",
-                items: [
-                    { text: "参加会议", sub: "cānjiā huìyì (회의 참석)" },
-                    { text: "打扫房间", sub: "dǎsǎo fángjiān (방 청소)" },
-                    { text: "骑自行车", sub: "qí zìxíngchē (자전거 타기)" },
-                    { text: "打算去旅游", sub: "dǎsuàn qù lǚyóu (여행 계획)" }
-                ]
-            },
-            "2026-02-20": {
-                type: "english",
-                title: "LC Part 2: 제안과 요청",
-                image: "https://images.unsplash.com/photo-1543167423-34612e03319b?q=80&w=800&auto=format&fit=crop",
-                caption: "Listen Carefully",
-                items: [
-                    { text: "Why don't we grab some coffee?", sub: "커피 한잔 어때요?" },
-                    { text: "Would you like me to review it?", sub: "제가 검토해 드릴까요?" },
-                    { text: "Let's go over the details.", sub: "세부 사항을 살펴봅시다." }
-                ]
-            },
-            "2026-02-21": {
-                type: "shadowing",
-                title: "Saturday Special: Emma Watson",
-                image: "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=800&auto=format&fit=crop",
-                caption: "Speak with Confidence",
-                script: {
-                    speaker: "Emma Watson (UN Speech)",
-                    content: "If not me, who? If not now, when? I invite you to step forward, to be seen, and to ask yourself.",
-                    trans: "내가 아니면 누가? 지금이 아니면 언제? 당신이 앞으로 나와 당당히 자신에게 물어보기를 청합니다..."
-                }
-            },
-            "2026-02-22": { type: "rest" },
-            "2026-02-23": {
-                type: "english",
-                title: "LC Part 1: 사진 묘사",
-                image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop",
-                caption: "Visualize Success",
-                items: [
-                    { text: "They are shaking hands.", sub: "그들은 악수를 하고 있다." },
-                    { text: "A woman is typing on a keyboard.", sub: "여자가 키보드를 치고 있다." },
-                    { text: "Some boxes are stacked on the floor.", sub: "상자들이 바닥에 쌓여 있다." }
-                ]
-            },
-             "2026-02-24": {
-                type: "chinese",
-                title: "HSK 3급: 감정과 상태",
-                image: "https://images.unsplash.com/photo-1515169273894-7e876dcf15ea?q=80&w=800&auto=format&fit=crop",
-                caption: "Express Yourself",
-                items: [
-                    { text: "特别高兴", sub: "tèbié gāoxìng (특별히 기쁘다)" },
-                    { text: "觉得舒服", sub: "juéde shūfu (편안하다고 느끼다)" },
-                    { text: "感到害怕", sub: "gǎndào hàipà (무서움을 느끼다)" },
-                    { text: "突然生气", sub: "tūrán shēngqì (갑자기 화내다)" }
-                ]
-            },
-            "2026-02-25": {
-                type: "english",
-                title: "LC Part 3: 회사 생활",
-                image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop",
-                caption: "Business Master",
-                items: [
-                    { text: "I'm calling to confirm the meeting.", sub: "회의를 확인하려고 전화했습니다." },
-                    { text: "Where is the conference room?", sub: "회의실이 어디인가요?" },
-                    { text: "The deadline has been extended.", sub: "마감일이 연장되었습니다." }
-                ]
-            },
-             "2026-02-26": {
-                type: "chinese",
-                title: "HSK 3급: 접속사 정복",
-                image: "https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?q=80&w=800&auto=format&fit=crop",
-                caption: "Connect the Dots",
-                items: [
-                    { text: "虽然...但是...", sub: "suīrán... dànshì... (비록~하지만)" },
-                    { text: "不但...而且...", sub: "búdàn... érqiě... (~뿐만 아니라)" },
-                    { text: "因为...所以...", sub: "yīnwèi... suǒyǐ... (~때문에 그래서)" },
-                    { text: "如果...就...", sub: "rúguǒ... jiù... (만약 ~라면)" }
-                ]
-            },
-            "2026-02-27": {
-                type: "english",
-                title: "LC Part 4: 공지사항",
-                image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=800&auto=format&fit=crop",
-                caption: "Stay Focused",
-                items: [
-                    { text: "Attention, please.", sub: "주목해 주세요." },
-                    { text: "Please remain seated.", sub: "자리에 앉아 계셔 주세요." },
-                    { text: "Thank you for your cooperation.", sub: "협조해 주셔서 감사합니다." }
-                ]
-            },
-             "2026-02-28": {
-                type: "shadowing",
-                title: "Sat Special: 겨우, 서른",
-                image: "https://images.unsplash.com/photo-1498835032512-d6aa46903268?q=80&w=800&auto=format&fit=crop",
-                caption: "Be Your Own Hero",
-                script: {
-                    speaker: "Gu Jia (三十而已)",
-                    content: "我没有靠山，我就是自己最稳的靠山。",
-                    trans: "난 든든한 뒷배경 같은 거 없어. 내가 바로 내 가장 든든한 배경이야."
-                }
-            },
-        };
-
-        function initApp() {
-            const today = new Date();
-            const dateStr = today.getFullYear() + "-" + 
-                            String(today.getMonth() + 1).padStart(2, '0') + "-" + 
-                            String(today.getDate()).padStart(2, '0');
+        // TTS 함수
+        function speak(text, lang) {
+            // 브라우저가 음성 합성 지원하는지 확인
+            if (!window.speechSynthesis) return;
             
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            document.getElementById('current-date').innerText = `${dateStr} (${days[today.getDay()]})`;
+            // 기존 재생 중인 음성 중단
+            window.speechSynthesis.cancel();
 
-            const data = studyPlan[dateStr];
-            const container = document.getElementById('dynamic-content');
-
-            if (!data || data.type === 'rest') {
-                container.innerHTML = `
-                    <div class="card flex flex-col items-center justify-center text-center py-10">
-                        <span class="text-6xl mb-4">🌌</span>
-                        <h2 class="text-2xl font-bold text-blue-100">완전한 휴식</h2>
-                        <p class="text-gray-200 mt-4 text-sm leading-relaxed">오늘은 충전하는 날! 🔋</p>
-                    </div>`;
-                return;
-            }
-
-            if (data.type === 'shadowing') {
-                const langType = data.script.speaker.includes("Emma") ? 'english' : 'chinese';
-                container.innerHTML = `
-                    <div class="study-img" style="background-image: url('${data.image}')"><div class="img-caption">${data.caption}</div></div>
-                    <div class="card">
-                        <span class="lang-tag bg-purple-500 text-white">토요일 스페셜</span>
-                        <h2 class="text-xl font-bold mb-4">${data.title}</h2>
-                        <div class="flex items-start mb-4 bg-white/10 p-4 rounded-xl">
-                            <div>
-                                <p class="text-sm font-bold text-blue-200 mb-1">${data.script.speaker}</p>
-                                <p class="text-lg font-serif italic mb-3">"${data.script.content}"</p>
-                                <p class="text-sm text-gray-300 border-t border-white/20 pt-2">${data.script.trans}</p>
-                            </div>
-                        </div>
-                        <div class="text-center mt-6 flex justify-center gap-2">
-                             <button class="px-6 py-2 bg-purple-600 rounded-full text-sm font-bold shadow-lg flex items-center" 
-                                onclick="speak('${data.script.content.replace(/'/g, "\\'")}', '${langType}', this)">🔊 듣기</button>
-                            <button class="px-6 py-2 bg-blue-500 rounded-full text-sm font-bold shadow-lg" onclick="alert('멋져요! 👍')">완료</button>
-                        </div>
-                    </div>`;
-                return;
-            }
-
-            let itemsHtml = '';
-            data.items.forEach((item, index) => {
-                itemsHtml += `
-                    <div class="flex items-center p-4 bg-white/10 rounded-xl mb-3 border border-white/5 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition" onclick="toggleCheck(this)">
-                        <div class="speak-btn" onclick="event.stopPropagation(); speak('${item.text.replace(/'/g, "\\'")}', '${data.type}', this)">🔊</div>
-                        <div class="flex-1"><p class="text-base font-bold">${item.text}</p><p class="text-xs text-blue-200 mt-1">${item.sub}</p></div>
-                        <div class="ml-auto text-xl opacity-0 check-mark">✅</div>
-                    </div>`;
-            });
-
-            container.innerHTML = `
-                <div class="study-img" style="background-image: url('${data.image}')"><div class="img-caption">${data.caption}</div></div>
-                <div class="card">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="lang-tag ${data.type === 'english' ? 'bg-blue-600' : 'bg-red-600'} text-white">${data.type.toUpperCase()}</span>
-                        <span class="text-xs text-gray-300" id="progress-text">0% 달성</span>
-                    </div>
-                    <h2 class="text-xl font-bold mb-4">${data.title}</h2>
-                    <div class="progress-bar-bg mb-6"><div class="progress-bar-fill" id="daily-progress"></div></div>
-                    <div class="space-y-2">${itemsHtml}</div>
-                </div>`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            utterance.rate = 0.85; // 학습을 위해 약간 느리게
+            utterance.pitch = 1.0;
+            
+            // 특정 언어 보이스 설정 최적화
+            const voices = window.speechSynthesis.getVoices();
+            window.speechSynthesis.speak(utterance);
         }
-
-        function toggleCheck(element) {
-            const check = element.querySelector('.check-mark');
-            const isChecked = check.style.opacity === '1';
-            check.style.opacity = isChecked ? '0' : '1';
-            element.classList.toggle('bg-blue-500/30'); 
-            const total = document.querySelectorAll('.check-mark').length;
-            const checked = document.querySelectorAll('.check-mark[style="opacity: 1;"]').length;
-            const percent = Math.round((checked / total) * 100);
-            document.getElementById('daily-progress').style.width = percent + '%';
-            document.getElementById('progress-text').innerText = percent + '% 달성';
-            if (percent === 100) setTimeout(() => alert('🎉 목표 달성!'), 300);
-        }
-
-        initApp();
     </script>
 </body>
 </html>
