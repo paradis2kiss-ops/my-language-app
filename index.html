@@ -300,11 +300,11 @@
                 // 서브텍스트 - 모두 클릭 시 토글
                 const subP = document.createElement('p');
                 subP.className = 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
-                subP.textContent = '💬';
+                subP.textContent = '💡 HINT';
                 let revealed = false;
                 subP.addEventListener('click', () => {
                     revealed = !revealed;
-                    subP.textContent = revealed ? item.sub : '💬';
+                    subP.textContent = revealed ? item.sub : '💡 HINT';
                     subP.className = revealed
                         ? 'text-[11px] text-slate-400 font-medium leading-relaxed cursor-pointer select-none'
                         : 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
