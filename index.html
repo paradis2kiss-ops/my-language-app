@@ -34,40 +34,111 @@
     </button>
 
     <script>
-        // 사용자님의 구글 시트 CSV 주소 (고정)
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?output=csv';
-        
+
         let allData = [];
         let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
 
-        // [데이터 로드] 구글 시트에서 가져오기
+        // ✅ 수정1: 쉼표 포함 셀 처리하는 CSV 파서
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < row.length; i++) {
+                const ch = row[i];
+                if (ch === '"') {
+                    if (inQuotes && row[i + 1] === '"') { current += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        // ✅ 수정2: 음성 목록 미리 로드 (비동기 문제 해결)
+        let voicesReady = false;
+        let cachedVoices = [];
+
+        function loadVoices() {
+            cachedVoices = window.speechSynthesis.getVoices();
+            if (cachedVoices.length > 0) voicesReady = true;
+        }
+        window.speechSynthesis.onvoiceschanged = () => { loadVoices(); };
+        loadVoices();
+
+        // ✅ 수정3: 음성 엔진 - lang값 유연하게 처리
+        function handleSpeak(text, lang) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+
+            const langLower = (lang || '').toLowerCase().trim();
+
+            if (langLower.startsWith('en')) {
+                // 영어: en, en-US, en-GB, english 모두 처리
+                const targetLang = langLower === 'en-gb' ? 'en-GB' : 'en-US';
+                const preferred = voices.find(v => v.lang === targetLang && v.name.toLowerCase().includes('female'))
+                                || voices.find(v => v.lang === targetLang)
+                                || voices.find(v => v.lang.startsWith('en'));
+                if (preferred) utterance.voice = preferred;
+                utterance.lang = targetLang;
+                utterance.rate = 0.85;
+                utterance.pitch = 0.95;
+            } else if (langLower.startsWith('ko') || langLower === '') {
+                // 한국어 또는 lang 없음
+                const koVoice = voices.find(v => v.lang === 'ko-KR');
+                if (koVoice) utterance.voice = koVoice;
+                utterance.lang = 'ko-KR';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+            } else {
+                // 기타 언어 그대로 사용
+                utterance.lang = lang;
+                utterance.rate = 0.9;
+            }
+
+            utterance.onerror = (e) => console.error('Speech error:', e.error, '| lang:', lang, '| text:', text);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // [데이터 로드]
         async function fetchSheetData() {
             try {
                 const response = await fetch(SHEET_CSV_URL);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const csvData = await response.text();
-                
-                // CSV 파싱 로직 (쉼표 기준 분리)
-                const rows = csvData.split('\n').slice(1); 
-                allData = rows.map(row => {
-                    const cols = row.split(',');
-                    return { 
-                        type: cols[0]?.trim(), 
-                        text: cols[1]?.trim(), 
-                        sub: cols[2]?.trim(), 
-                        lang: cols[3]?.trim(), 
-                        color: cols[4]?.trim() || 'slate' 
-                    };
-                }).filter(item => item.text && item.text !== "");
+
+                const rows = csvData.split('\n').slice(1);
+                allData = rows
+                    .map(row => {
+                        const cols = parseCSVRow(row); // ✅ 수정된 파서 사용
+                        return {
+                            type:  cols[0] || '',
+                            text:  cols[1] || '',
+                            sub:   cols[2] || '',
+                            lang:  cols[3] || 'en-US',
+                            color: cols[4] || 'blue'
+                        };
+                    })
+                    .filter(item => item.text !== '');
 
                 renderRandom();
             } catch (e) {
                 console.error('Fetch error:', e);
-                document.getElementById('loader').innerHTML = `<div class="text-red-400 text-sm">CONNECTION ERROR<br><span class="text-[10px] text-slate-500">Check Google Sheet "Publish to Web" settings</span></div>`;
+                document.getElementById('loader').innerHTML =
+                    `<div class="text-red-400 text-sm text-center">
+                        ❌ CONNECTION ERROR<br>
+                        <span class="text-[10px] text-slate-500">구글 시트 → 파일 → 웹에 게시(CSV) 설정 확인</span>
+                    </div>`;
             }
         }
 
-        // [렌더링] 무작위 4개 추출
+        // [렌더링] 무작위 4개
         function renderRandom() {
             const shuffled = [...allData].sort(() => Math.random() - 0.5);
             document.getElementById('engine-status').innerText = "SYSTEM: RANDOM MODE";
@@ -78,24 +149,30 @@
         function renderCards(items) {
             const container = document.getElementById('main-container');
             container.innerHTML = '';
-            
+
             if (items.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-slate-500">표시할 데이터가 없습니다.</div>`;
                 return;
             }
 
-            items.forEach(item => {
+            items.forEach((item, idx) => {
                 const isBookmarked = bookmarks.some(b => b.text === item.text);
+                const safeItem = encodeURIComponent(JSON.stringify(item));
+                // 텍스트 내 백틱/따옴표 이스케이프
+                const safeText = item.text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'");
+
                 const card = document.createElement('div');
                 card.className = `glass-card p-6 border-l-4 border-${item.color}-500/50 relative`;
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <span class="text-[10px] font-black tracking-widest text-${item.color}-400 uppercase">${item.type}</span>
                         <div class="flex space-x-2">
-                            <button onclick="toggleBookmark('${encodeURIComponent(JSON.stringify(item))}', this)" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}">
+                            <button onclick="toggleBookmark('${safeItem}', this)"
+                                class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}">
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
-                            <button onclick="handleSpeak(\`${item.text.replace(/`/g, '\\`')}\`, '${item.lang}')" class="w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform">
+                            <button onclick="handleSpeak('${safeText}', '${item.lang}')"
+                                class="w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform">
                                 <i class="fa-solid fa-play"></i>
                             </button>
                         </div>
@@ -129,27 +206,7 @@
             renderCards(bookmarks);
         }
 
-        // [음성 엔진] 엠마 스톤 스타일 (en-GB) 최적화
-        function handleSpeak(text, lang) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-            
-            if (lang === 'en-GB') {
-                const emmaVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) 
-                                 || voices.find(v => v.lang === 'en-GB');
-                if (emmaVoice) utterance.voice = emmaVoice;
-                utterance.rate = 0.85; 
-                utterance.pitch = 0.9; 
-            } else {
-                utterance.lang = lang || 'en-US';
-                utterance.rate = 0.9;
-            }
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // 초기 실행 및 목소리 로드 대기
-        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        // 초기 실행
         fetchSheetData();
     </script>
 </body>
