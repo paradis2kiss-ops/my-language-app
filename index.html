@@ -9,40 +9,46 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; }
-        .bookmark-active { color: #facc15 !important; } /* 별표 활성화 색상 */
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
+        .bookmark-active { color: #facc15 !important; }
+        #loader { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
     </style>
 </head>
 <body class="pb-32">
     <header class="p-8 pt-12 flex justify-between items-start">
         <div>
-            <h1 class="text-3xl font-extrabold tracking-tighter italic">2026 Master <span class="text-blue-400">V2</span></h1>
-            <p class="text-slate-500 text-xs mt-2 font-mono">SYSTEM: RANDOM & BOOKMARK</p>
+            <h1 class="text-3xl font-extrabold tracking-tighter italic uppercase">2026 Master <span class="text-blue-400">V2</span></h1>
+            <p id="engine-status" class="text-slate-500 text-xs mt-2 font-mono tracking-widest">SYSTEM: CLOUD SYNCED</p>
         </div>
-        <button onclick="toggleBookmarkView()" class="p-3 bg-slate-800 rounded-2xl text-yellow-400 border border-white/10">
+        <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg">
             <i class="fa-solid fa-star"></i>
         </button>
     </header>
 
     <main id="main-container" class="px-6 space-y-6">
-        <div id="loader" class="text-center py-20 text-slate-600 font-bold animate-pulse">SYNCING CLOUD...</div>
+        <div id="loader" class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">SYNCING CLOUD DATA...</div>
     </main>
 
-    <button onclick="location.reload()" class="fixed bottom-10 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-2xl flex items-center justify-center active:rotate-180 transition duration-500 z-50">
+    <button onclick="location.reload()" class="fixed bottom-10 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center active:rotate-180 transition duration-500 z-50">
         <i class="fa-solid fa-rotate text-white text-2xl"></i>
     </button>
 
     <script>
+        // 사용자님의 구글 시트 CSV 주소 (고정)
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?output=csv';
+        
         let allData = [];
         let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
 
+        // [데이터 로드] 구글 시트에서 가져오기
         async function fetchSheetData() {
             try {
                 const response = await fetch(SHEET_CSV_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
                 const csvData = await response.text();
-                const rows = csvData.split('\n').slice(1);
-
+                
+                // CSV 파싱 로직 (쉼표 기준 분리)
+                const rows = csvData.split('\n').slice(1); 
                 allData = rows.map(row => {
                     const cols = row.split(',');
                     return { 
@@ -52,22 +58,32 @@
                         lang: cols[3]?.trim(), 
                         color: cols[4]?.trim() || 'slate' 
                     };
-                }).filter(item => item.text);
+                }).filter(item => item.text && item.text !== "");
 
                 renderRandom();
             } catch (e) {
-                document.getElementById('loader').innerText = "CHECK CSV URL";
+                console.error('Fetch error:', e);
+                document.getElementById('loader').innerHTML = `<div class="text-red-400 text-sm">CONNECTION ERROR<br><span class="text-[10px] text-slate-500">Check Google Sheet "Publish to Web" settings</span></div>`;
             }
         }
 
+        // [렌더링] 무작위 4개 추출
         function renderRandom() {
             const shuffled = [...allData].sort(() => Math.random() - 0.5);
+            document.getElementById('engine-status').innerText = "SYSTEM: RANDOM MODE";
             renderCards(shuffled.slice(0, 4));
         }
 
+        // [카드 생성 UI]
         function renderCards(items) {
             const container = document.getElementById('main-container');
             container.innerHTML = '';
+            
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-slate-500">표시할 데이터가 없습니다.</div>`;
+                return;
+            }
+
             items.forEach(item => {
                 const isBookmarked = bookmarks.some(b => b.text === item.text);
                 const card = document.createElement('div');
@@ -79,63 +95,4 @@
                             <button onclick="toggleBookmark('${encodeURIComponent(JSON.stringify(item))}', this)" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}">
                                 <i class="fa-solid fa-star text-xs"></i>
                             </button>
-                            <button onclick="speak(\`${item.text}\`, '${item.lang}')" class="w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center">
-                                <i class="fa-solid fa-play"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-lg font-bold leading-tight mb-2">"${item.text}"</p>
-                    <p class="text-[11px] text-slate-500 font-medium">${item.sub}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function toggleBookmark(itemStr, btn) {
-            const item = JSON.parse(decodeURIComponent(itemStr));
-            const index = bookmarks.findIndex(b => b.text === item.text);
-            if (index > -1) {
-                bookmarks.splice(index, 1);
-                btn.classList.remove('bookmark-active');
-            } else {
-                bookmarks.push(item);
-                btn.classList.add('bookmark-active');
-            }
-            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-        }
-
-        function toggleBookmarkView() {
-            if (bookmarks.length === 0) { alert("저장된 문장이 없습니다!"); return; }
-            renderCards(bookmarks);
-            document.getElementById('engine-status').innerText = "VIEWING BOOKMARKS";
-        }
-
-        function speak(text, lang) {
-    window.speechSynthesis.cancel(); // 이전 음성 취소
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // 브라우저의 목소리 목록 가져오기
-    const voices = window.speechSynthesis.getVoices();
-    
-    if (lang === 'en-GB') {
-        // 엠마 스톤 스타일 (영국 여성) 찾기
-        const emmaVoice = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) 
-                         || voices.find(v => v.lang === 'en-GB');
-        if (emmaVoice) utterance.voice = emmaVoice;
-        utterance.rate = 0.85; 
-        utterance.pitch = 0.9; 
-    } else {
-        utterance.lang = lang || 'en-US';
-        utterance.rate = 0.9;
-    }
-    
-    window.speechSynthesis.speak(utterance);
-}
-
-// 중요: 목소리 목록 로딩 보장
-window.speechSynthesis.onvoiceschanged = () => {
-    window.speechSynthesis.getVoices();
-};
-    </script>
-</body>
-</html>
+                            <button onclick="handle
