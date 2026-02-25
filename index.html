@@ -9,30 +9,70 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #0f172a; color: white; -webkit-tap-highlight-color: transparent; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
+        .glass-card { background: rgba(30,41,59,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; transition: all 0.3s ease; }
         .bookmark-active { color: #facc15 !important; }
-        #loader { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
         .voice-btn { transition: all 0.2s; white-space: nowrap; }
         .voice-btn:active { transform: scale(0.9); }
         .uk-panel { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, opacity 0.35s ease; opacity: 0; }
         .uk-panel.open { max-height: 130px; opacity: 1; }
         input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(99,102,241,0.3); outline: none; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #818cf8; cursor: pointer; }
+        /* 탭 */
+        .main-tab { transition: all 0.2s; }
+        .main-tab.active { background: rgba(37,99,235,0.25); color: #93c5fd; border-color: rgba(37,99,235,0.5); }
+        .main-tab:not(.active) { color: #475569; border-color: rgba(255,255,255,0.08); }
+        /* 과목 필터 */
+        .sub-filter { transition: all 0.2s; font-size: 11px; white-space: nowrap; }
+        .sub-filter.active { color: white; }
+        .sub-filter:not(.active) { opacity: 0.4; }
     </style>
 </head>
 <body class="pb-32">
-    <header class="p-8 pt-12 flex justify-between items-start">
+
+    <header class="p-6 pt-10 flex justify-between items-start">
         <div>
             <h1 class="text-3xl font-extrabold tracking-tighter italic uppercase">2026 Master <span class="text-blue-400">V2</span></h1>
-            <p id="engine-status" class="text-slate-500 text-xs mt-2 font-mono tracking-widest">SYSTEM: CLOUD SYNCED</p>
+            <p id="engine-status" class="text-slate-500 text-xs mt-1 font-mono tracking-widest">SYSTEM: CLOUD SYNCED</p>
         </div>
         <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg">
             <i class="fa-solid fa-star"></i>
         </button>
     </header>
 
-    <main id="main-container" class="px-6 space-y-6">
-        <div id="loader" class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">SYNCING CLOUD DATA...</div>
+    <!-- 메인 탭 -->
+    <div class="px-6 mb-3 flex gap-3">
+        <button id="tab-lang" onclick="switchMainTab('lang')"
+            class="main-tab active flex-1 py-2.5 rounded-xl border text-sm font-bold tracking-wide">
+            🌏 언어학습
+        </button>
+        <button id="tab-cert" onclick="switchMainTab('cert')"
+            class="main-tab flex-1 py-2.5 rounded-xl border text-sm font-bold tracking-wide">
+            📚 자격증
+        </button>
+    </div>
+
+    <!-- 자격증 과목 필터 (자격증 탭일 때만 표시) -->
+    <div id="cert-filters" class="px-6 mb-4 hidden">
+        <div class="flex gap-2 overflow-x-auto pb-1">
+            <button onclick="switchSubject('ALL')" data-subject="ALL"
+                class="sub-filter active bg-slate-700 text-white px-3 py-1.5 rounded-lg font-bold">전체</button>
+            <button onclick="switchSubject('SQLD')" data-subject="SQLD"
+                class="sub-filter bg-indigo-900/40 text-indigo-300 px-3 py-1.5 rounded-lg font-bold">SQLD</button>
+            <button onclick="switchSubject('사조사')" data-subject="사조사"
+                class="sub-filter bg-violet-900/40 text-violet-300 px-3 py-1.5 rounded-lg font-bold">사조사</button>
+            <button onclick="switchSubject('정처기')" data-subject="정처기"
+                class="sub-filter bg-blue-900/40 text-blue-300 px-3 py-1.5 rounded-lg font-bold">정처기</button>
+            <button onclick="switchSubject('빅분기')" data-subject="빅분기"
+                class="sub-filter bg-rose-900/40 text-rose-300 px-3 py-1.5 rounded-lg font-bold">빅분기</button>
+            <button onclick="switchSubject('파이썬')" data-subject="파이썬"
+                class="sub-filter bg-green-900/40 text-green-300 px-3 py-1.5 rounded-lg font-bold">파이썬</button>
+        </div>
+    </div>
+
+    <main id="main-container" class="px-6 space-y-5">
+        <div class="flex items-center justify-center" style="min-height:50vh">
+            <p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">SYNCING CLOUD DATA...</p>
+        </div>
     </main>
 
     <button onclick="location.reload()" class="fixed bottom-10 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center active:rotate-180 transition duration-500 z-50">
@@ -40,168 +80,176 @@
     </button>
 
     <script>
-        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?output=csv';
+        // ── 구글 시트 CSV URL ──────────────────────────────────────────
+        // 언어학습 시트1 (gid=0)
+        const LANG_CSV = 'https://docs.google.com/spreadsheets/d/1-DGHkV3qOo6Ej4Uw_curAPCVASoAoWPyyWeeq8ev8fk/pub?gid=0&single=true&output=csv';
+        // 자격증 시트 (gid=1184571085)
+        const CERT_CSV = 'https://docs.google.com/spreadsheets/d/1-DGHkV3qOo6Ej4Uw_curAPCVASoAoWPyyWeeq8ev8fk/pub?gid=1184571085&single=true&output=csv';
+        // ──────────────────────────────────────────────────────────────
 
-        let allData = [];
-        let bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        const CERT_SUBJECTS  = ['SQLD', '사조사', '정처기', '빅분기', '파이썬'];
+        const LANG_TYPES     = ['ENGLISH', 'JAPANESE', 'CHINESE', 'KANJI', 'DATA', 'HISTORY'];
 
-        // ✅ CSV 파서: 따옴표 안 쉼표 무시
+        let langData     = [];
+        let certData     = [];
+        let currentTab   = 'lang';
+        let currentSubject = 'ALL'; // 자격증 과목 필터
+        let bookmarks    = JSON.parse(localStorage.getItem('bookmarks_v2') || '[]');
+
+        // ── CSV 파서 ──────────────────────────────────────────────────
         function parseCSVRow(row) {
-            const result = [];
-            let current = '';
-            let inQuotes = false;
+            const result = []; let current = ''; let inQuotes = false;
             for (let i = 0; i < row.length; i++) {
                 const ch = row[i];
                 if (ch === '"') {
-                    if (inQuotes && row[i + 1] === '"') { current += '"'; i++; }
-                    else { inQuotes = !inQuotes; }
-                } else if (ch === ',' && !inQuotes) {
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    current += ch;
-                }
+                    if (inQuotes && row[i+1] === '"') { current += '"'; i++; }
+                    else inQuotes = !inQuotes;
+                } else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+                else current += ch;
             }
             result.push(current.trim());
             return result;
         }
-
-        // ✅ 텍스트 정리: **마크다운**, 앞뒤 """ 제거
         function cleanText(str) {
             if (!str) return '';
-            return str
-                .replace(/\*\*(.*?)\*\*/g, '$1')
-                .replace(/^"+|"+$/g, '')
-                .trim();
+            return str.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^"+|"+$/g, '').trim();
+        }
+        function parseCSV(csvText) {
+            return csvText.split('\n').slice(1).map(row => {
+                if (!row.trim()) return null;
+                const cols = parseCSVRow(row);
+                return { type: cleanText(cols[0])||'', text: cleanText(cols[1])||'', sub: cleanText(cols[2])||'', lang: (cols[3]||'ko-KR').trim(), color: (cols[4]||'blue').trim() };
+            }).filter(item => item && item.text !== '');
         }
 
-        // ✅ 음성 목록 캐싱 (비동기 문제 해결)
+        // ── 음성 ──────────────────────────────────────────────────────
         let cachedVoices = [];
-        function loadVoices() {
-            const v = window.speechSynthesis.getVoices();
-            if (v.length > 0) cachedVoices = v;
-        }
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        loadVoices();
+        function loadVoices() { const v = window.speechSynthesis.getVoices(); if (v.length > 0) cachedVoices = v; }
+        window.speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
 
-        // ✅ 음성 엔진: 확인된 음성 목록 기반 최적화
         function handleSpeak(text, lang) {
             window.speechSynthesis.cancel();
             const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
-            const utterance = new SpeechSynthesisUtterance(text);
+            const utt = new SpeechSynthesisUtterance(text);
             const l = (lang || 'ko-KR').trim();
-
             let voice = null;
-
             if (l.startsWith('en')) {
-                if (l === 'en-GB') {
-                    // ACTING용: Google UK English Female 우선
-                    voice = voices.find(v => v.name === 'Google UK English Female')
-                          || voices.find(v => v.lang === 'en-GB');
-                } else {
-                    voice = voices.find(v => v.name === 'Google US English')
-                          || voices.find(v => v.lang === 'en-US');
-                }
-                utterance.rate = 0.82;
-                utterance.pitch = 1.0;
-
+                voice = l === 'en-GB'
+                    ? voices.find(v => v.name === 'Google UK English Female') || voices.find(v => v.lang === 'en-GB')
+                    : voices.find(v => v.name === 'Google US English') || voices.find(v => v.lang === 'en-US');
+                utt.rate = 0.82; utt.pitch = 1.0;
             } else if (l.startsWith('ja')) {
-                voice = voices.find(v => v.name === 'Google 日本語')
-                      || voices.find(v => v.lang === 'ja-JP');
-                utterance.rate = 0.92;
-                utterance.pitch = 1.05;
-
+                voice = voices.find(v => v.name === 'Google 日本語') || voices.find(v => v.lang === 'ja-JP');
+                utt.rate = 0.92; utt.pitch = 1.05;
             } else if (l.startsWith('zh')) {
-                // 보통화 우선
-                voice = voices.find(v => v.name === 'Google 普通话（中国大陆）')
-                      || voices.find(v => v.lang === 'zh-CN');
-                utterance.rate = 0.82;
-                utterance.pitch = 1.0;
-
+                voice = voices.find(v => v.name === 'Google 普通话（中国大陆）') || voices.find(v => v.lang === 'zh-CN');
+                utt.rate = 0.82; utt.pitch = 1.0;
             } else {
-                // 한국어: Google 우선, 없으면 Microsoft Heami
-                voice = voices.find(v => v.name === 'Google 한국의')
-                      || voices.find(v => v.name === 'Microsoft Heami')
-                      || voices.find(v => v.lang === 'ko-KR');
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
+                voice = voices.find(v => v.name === 'Google 한국의') || voices.find(v => v.name === 'Microsoft Heami') || voices.find(v => v.lang === 'ko-KR');
+                utt.rate = 1.0; utt.pitch = 1.0;
             }
-
-            if (voice) utterance.voice = voice;
-            utterance.lang = voice ? voice.lang : l;
-            utterance.onerror = (e) => console.error('TTS Error:', e.error, '|', lang, '|', text);
-            window.speechSynthesis.speak(utterance);
+            if (voice) utt.voice = voice;
+            utt.lang = voice ? voice.lang : l;
+            utt.onerror = e => console.error('TTS:', e.error, lang);
+            window.speechSynthesis.speak(utt);
         }
-
-        // ✅ UK 슬라이더용 커스텀 재생 함수
         function handleSpeakCustom(text, lang, rate, pitch) {
             window.speechSynthesis.cancel();
             const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voice = voices.find(v => v.name === 'Google UK English Female')
-                        || voices.find(v => v.lang === 'en-GB');
-            if (voice) utterance.voice = voice;
-            utterance.lang = 'en-GB';
-            utterance.rate  = rate;
-            utterance.pitch = pitch;
-            utterance.onerror = (e) => console.error('TTS Custom Error:', e.error);
-            window.speechSynthesis.speak(utterance);
+            const utt = new SpeechSynthesisUtterance(text);
+            const voice = voices.find(v => v.name === 'Google UK English Female') || voices.find(v => v.lang === 'en-GB');
+            if (voice) utt.voice = voice;
+            utt.lang = 'en-GB'; utt.rate = rate; utt.pitch = pitch;
+            window.speechSynthesis.speak(utt);
         }
 
-        // [데이터 로드]
-        async function fetchSheetData() {
+        // ── 데이터 로드 ───────────────────────────────────────────────
+        async function fetchAll() {
+            showLoader();
             try {
-                const response = await fetch(SHEET_CSV_URL);
-                if (!response.ok) throw new Error('fetch failed');
-                const csvData = await response.text();
-
-                const rows = csvData.split('\n').slice(1);
-                allData = rows
-                    .map(row => {
-                        if (!row.trim()) return null;
-                        const cols = parseCSVRow(row);
-                        return {
-                            type:  cleanText(cols[0]) || 'INFO',
-                            text:  cleanText(cols[1]) || '',
-                            sub:   cleanText(cols[2]) || '',
-                            lang:  (cols[3] || 'ko-KR').trim(),
-                            color: (cols[4] || 'blue').trim()
-                        };
-                    })
-                    .filter(item => item && item.text !== '');
-
+                const r1 = await fetch(LANG_CSV);
+                langData = parseCSV(await r1.text());
+                // 자격증 시트 gid 설정 전까지는 빈 배열
+                try {
+                    const r2 = await fetch(CERT_CSV);
+                    certData = parseCSV(await r2.text());
+                } catch(e) { certData = []; }
                 renderRandom();
-            } catch (e) {
-                console.error('Fetch error:', e);
-                document.getElementById('loader').innerHTML =
-                    `<div class="text-red-400 text-sm text-center">
-                        ❌ CONNECTION ERROR<br>
-                        <span class="text-[10px] text-slate-400">구글 시트 → 파일 → 웹에 게시(CSV) 확인</span>
-                    </div>`;
+            } catch(e) {
+                document.getElementById('main-container').innerHTML =
+                    `<div class="text-red-400 text-sm text-center py-20">❌ CONNECTION ERROR<br><span class="text-[10px] text-slate-400">구글 시트 웹에 게시 설정 확인</span></div>`;
             }
         }
 
-        function renderRandom() {
-            // 반드시 6가지 TYPE 각 1개씩 고정
-            const requiredTypes = ['ENGLISH', 'JAPANESE', 'CHINESE', 'KANJI', 'DATA', 'HISTORY'];
-            const picked = [];
+        function showLoader() {
+            document.getElementById('main-container').innerHTML =
+                `<div class="flex items-center justify-center" style="min-height:40vh"><p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">LOADING...</p></div>`;
+        }
 
-            requiredTypes.forEach(type => {
-                const pool = allData.filter(d => d.type === type);
-                if (pool.length > 0) {
-                    picked.push(pool[Math.floor(Math.random() * pool.length)]);
-                }
+        // ── 탭 전환 ───────────────────────────────────────────────────
+        function switchMainTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-lang').classList.toggle('active', tab === 'lang');
+            document.getElementById('tab-cert').classList.toggle('active', tab === 'cert');
+            document.getElementById('cert-filters').classList.toggle('hidden', tab !== 'cert');
+            if (tab === 'lang') currentSubject = 'ALL';
+            renderRandom();
+        }
+
+        // ── 과목 필터 전환 ────────────────────────────────────────────
+        function switchSubject(subject) {
+            currentSubject = subject;
+            document.querySelectorAll('.sub-filter').forEach(btn => {
+                const isActive = btn.dataset.subject === subject;
+                btn.classList.toggle('active', isActive);
             });
+            renderRandom();
+        }
 
-            document.getElementById('engine-status').innerText = "SYSTEM: RANDOM MODE";
+        // ── 랜덤 렌더링 ───────────────────────────────────────────────
+        function renderRandom() {
+            let picked = [];
+
+            if (currentTab === 'lang') {
+                // 언어학습: TYPE별 1개씩
+                LANG_TYPES.forEach(type => {
+                    const pool = langData.filter(d => d.type === type);
+                    if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
+                });
+                document.getElementById('engine-status').innerText = 'SYSTEM: 🌏 LANGUAGE · RANDOM';
+
+            } else {
+                // 자격증
+                if (certData.length === 0) {
+                    document.getElementById('main-container').innerHTML =
+                        `<div class="text-center py-20 text-slate-500 text-sm">
+                            📋 자격증 시트를 구글 시트에 추가하고<br>코드의 CERT_CSV gid를 교체해주세요
+                        </div>`;
+                    return;
+                }
+                if (currentSubject === 'ALL') {
+                    // 전체: 5과목에서 각 1개씩
+                    CERT_SUBJECTS.forEach(subj => {
+                        const pool = certData.filter(d => d.type === subj);
+                        if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
+                    });
+                    document.getElementById('engine-status').innerText = 'SYSTEM: 📚 ALL SUBJECTS · RANDOM';
+                } else {
+                    // 특정 과목: 해당 과목에서 6개
+                    const pool = certData.filter(d => d.type === currentSubject);
+                    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+                    picked = shuffled.slice(0, 6);
+                    document.getElementById('engine-status').innerText = `SYSTEM: 📚 ${currentSubject} · RANDOM`;
+                }
+            }
+
             renderCards(picked.sort(() => Math.random() - 0.5));
         }
 
-        // ✅ 카드 렌더링: innerHTML 대신 addEventListener 사용 (특수문자 onclick 파괴 방지)
+        // ── 카드 렌더링 ───────────────────────────────────────────────
         function renderCards(items) {
             const container = document.getElementById('main-container');
             container.innerHTML = '';
-
             if (items.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-slate-500">표시할 데이터가 없습니다.</div>`;
                 return;
@@ -209,22 +257,19 @@
 
             items.forEach(item => {
                 const isBookmarked = bookmarks.some(b => b.text === item.text);
-
                 const card = document.createElement('div');
-                card.className = `glass-card p-6 border-l-4 border-${item.color}-500/50 relative`;
+                card.className = `glass-card p-6 border-l-4 border-${item.color}-500/50`;
 
                 // 헤더
                 const header = document.createElement('div');
                 header.className = 'flex justify-between items-start mb-4';
-
                 const typeLabel = document.createElement('span');
                 typeLabel.className = `text-[10px] font-black tracking-widest text-${item.color}-400 uppercase`;
                 typeLabel.textContent = item.type;
-
                 const btnGroup = document.createElement('div');
-                btnGroup.className = 'flex space-x-2';
+                btnGroup.className = 'flex gap-2 items-center';
 
-                // 북마크 버튼
+                // 북마크
                 const bookmarkBtn = document.createElement('button');
                 bookmarkBtn.className = `w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}`;
                 bookmarkBtn.innerHTML = `<i class="fa-solid fa-star text-xs"></i>`;
@@ -232,55 +277,40 @@
 
                 // 음성 버튼 분기
                 if (item.type === 'KANJI') {
-                    // 음·훈 / 中발음 / 日발음
-                    const langs = [
-                        { label: '음·훈', code: 'ko-KR', bg: 'bg-slate-700',      text: 'text-slate-300' },
-                        { label: '中 발음', code: 'zh-CN', bg: 'bg-red-900/30',   text: 'text-red-400' },
-                        { label: '日 발음', code: 'ja-JP', bg: 'bg-emerald-900/30', text: 'text-emerald-400' }
-                    ];
-                    langs.forEach(l => {
+                    [
+                        { label: '음·훈', code: 'ko-KR', bg: 'bg-slate-700', text: 'text-slate-300' },
+                        { label: '中', code: 'zh-CN', bg: 'bg-red-900/30', text: 'text-red-400' },
+                        { label: '日', code: 'ja-JP', bg: 'bg-emerald-900/30', text: 'text-emerald-400' }
+                    ].forEach(l => {
                         const b = document.createElement('button');
                         b.className = `voice-btn ${l.bg} ${l.text} px-2 py-1 rounded-lg text-[10px] font-bold`;
                         b.textContent = l.label;
                         b.addEventListener('click', () => handleSpeak(item.text, l.code));
                         btnGroup.appendChild(b);
                     });
-
                 } else if (item.type === 'ENGLISH' || item.type === 'ACTING') {
-                    // 🇺🇸 US 즉시 재생
                     const usBtn = document.createElement('button');
                     usBtn.className = 'voice-btn bg-blue-900/30 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     usBtn.textContent = '🇺🇸 US';
                     usBtn.addEventListener('click', () => handleSpeak(item.text, 'en-US'));
                     btnGroup.appendChild(usBtn);
 
-                    // 🇬🇧 UK: 짧게 클릭 → 즉시 재생 / 길게 누르기 → 슬라이더 패널 토글
                     const ukBtn = document.createElement('button');
                     ukBtn.className = 'voice-btn bg-indigo-900/30 text-indigo-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     ukBtn.textContent = '🇬🇧 UK';
-
-                    // 길게 누르기 감지
-                    let pressTimer = null;
-                    let isLongPress = false;
-
+                    let pressTimer = null, isLongPress = false;
                     ukBtn.addEventListener('pointerdown', () => {
                         isLongPress = false;
                         pressTimer = setTimeout(() => {
                             isLongPress = true;
-                            // 슬라이더 패널 토글
-                            const panel = ukBtn.closest('.glass-card').querySelector('.uk-panel');
-                            if (panel) panel.classList.toggle('open');
-                        }, 500); // 0.5초 이상 누르면 패널 열림
+                            ukBtn.closest('.glass-card').querySelector('.uk-panel')?.classList.toggle('open');
+                        }, 500);
                     });
-                    ukBtn.addEventListener('pointerup', () => {
-                        clearTimeout(pressTimer);
-                        if (!isLongPress) handleSpeakCustom(item.text, 'en-GB', 0.85, 0.9);
-                    });
+                    ukBtn.addEventListener('pointerup', () => { clearTimeout(pressTimer); if (!isLongPress) handleSpeakCustom(item.text, 'en-GB', 0.85, 0.9); });
                     ukBtn.addEventListener('pointerleave', () => clearTimeout(pressTimer));
                     btnGroup.appendChild(ukBtn);
-
                 } else {
-                    // 일반 재생 버튼 1개
+                    // 한국어(자격증 포함) 재생 버튼
                     const speakBtn = document.createElement('button');
                     speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
                     speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
@@ -297,7 +327,7 @@
                 textP.className = 'text-lg font-bold leading-tight mb-3 tracking-tight text-white/90';
                 textP.textContent = `"${item.text}"`;
 
-                // 서브텍스트 - 모두 클릭 시 토글
+                // HINT 토글
                 const subP = document.createElement('p');
                 subP.className = 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
                 subP.textContent = '💡 HINT';
@@ -310,7 +340,7 @@
                         : 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
                 });
 
-                // UK 슬라이더 패널 (ENGLISH/ACTING만)
+                // UK 슬라이더 패널
                 let ukPanel = null;
                 if (item.type === 'ENGLISH' || item.type === 'ACTING') {
                     ukPanel = document.createElement('div');
@@ -318,30 +348,26 @@
                     ukPanel.innerHTML = `
                         <div class="bg-indigo-950/50 border border-indigo-500/20 rounded-xl p-3 space-y-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-indigo-300 font-bold tracking-widest">🇬🇧 UK 음성 조절</span>
+                                <span class="text-[10px] text-indigo-300 font-bold">🇬🇧 UK 음성 조절</span>
                                 <button class="uk-play-btn text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-1 rounded-lg font-bold">▶ 재생</button>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-slate-400 w-8">속도</span>
                                 <input type="range" class="uk-rate flex-1" min="0.5" max="1.5" step="0.05" value="0.85">
-                                <span class="uk-rate-val text-[10px] text-indigo-300 w-7 text-right">0.85</span>
+                                <span class="uk-rate-val text-[10px] text-indigo-300 w-8 text-right">0.85</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-slate-400 w-8">높이</span>
                                 <input type="range" class="uk-pitch flex-1" min="0.5" max="2.0" step="0.05" value="0.9">
-                                <span class="uk-pitch-val text-[10px] text-indigo-300 w-7 text-right">0.9</span>
+                                <span class="uk-pitch-val text-[10px] text-indigo-300 w-8 text-right">0.9</span>
                             </div>
-                        </div>
-                    `;
-                    const rateInput  = ukPanel.querySelector('.uk-rate');
-                    const pitchInput = ukPanel.querySelector('.uk-pitch');
-                    const rateVal    = ukPanel.querySelector('.uk-rate-val');
-                    const pitchVal   = ukPanel.querySelector('.uk-pitch-val');
-                    rateInput.addEventListener('input',  () => rateVal.textContent  = parseFloat(rateInput.value).toFixed(2));
-                    pitchInput.addEventListener('input', () => pitchVal.textContent = parseFloat(pitchInput.value).toFixed(2));
-                    ukPanel.querySelector('.uk-play-btn').addEventListener('click', () => {
-                        handleSpeakCustom(item.text, 'en-GB', parseFloat(rateInput.value), parseFloat(pitchInput.value));
-                    });
+                        </div>`;
+                    const ri = ukPanel.querySelector('.uk-rate'), pi = ukPanel.querySelector('.uk-pitch');
+                    const rv = ukPanel.querySelector('.uk-rate-val'), pv = ukPanel.querySelector('.uk-pitch-val');
+                    ri.addEventListener('input', () => rv.textContent = parseFloat(ri.value).toFixed(2));
+                    pi.addEventListener('input', () => pv.textContent = parseFloat(pi.value).toFixed(2));
+                    ukPanel.querySelector('.uk-play-btn').addEventListener('click', () =>
+                        handleSpeakCustom(item.text, 'en-GB', parseFloat(ri.value), parseFloat(pi.value)));
                 }
 
                 card.appendChild(header);
@@ -352,27 +378,20 @@
             });
         }
 
+        // ── 북마크 ────────────────────────────────────────────────────
         function toggleBookmark(item, btn) {
             const index = bookmarks.findIndex(b => b.text === item.text);
-            if (index > -1) {
-                bookmarks.splice(index, 1);
-                btn.classList.remove('bookmark-active');
-                btn.classList.add('text-slate-500');
-            } else {
-                bookmarks.push(item);
-                btn.classList.add('bookmark-active');
-                btn.classList.remove('text-slate-500');
-            }
-            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+            if (index > -1) { bookmarks.splice(index, 1); btn.classList.remove('bookmark-active'); btn.classList.add('text-slate-500'); }
+            else { bookmarks.push(item); btn.classList.add('bookmark-active'); btn.classList.remove('text-slate-500'); }
+            localStorage.setItem('bookmarks_v2', JSON.stringify(bookmarks));
         }
-
         function toggleBookmarkView() {
-            if (bookmarks.length === 0) { alert("저장된 문장이 없습니다!"); return; }
-            document.getElementById('engine-status').innerText = "SYSTEM: BOOKMARKS";
+            if (bookmarks.length === 0) { alert("저장된 카드가 없습니다!"); return; }
+            document.getElementById('engine-status').innerText = 'SYSTEM: ⭐ BOOKMARKS';
             renderCards(bookmarks);
         }
 
-        fetchSheetData();
+        fetchAll();
     </script>
 </body>
 </html>
