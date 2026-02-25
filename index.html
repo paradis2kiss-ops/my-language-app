@@ -84,7 +84,7 @@
     <script>
         // ── 구글 시트 CSV URL ──────────────────────────────────────────
         // 언어학습 시트1 (gid=0)
-        const LANG_CSV = 'https://docs.google.com/spreadsheets/d/1-DGHkV3qOo6Ej4Uw_curAPCVASoAoWPyyWeeq8ev8fk/pub?gid=0&single=true&output=csv';
+        const LANG_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?gid=0&single=true&output=csv';
         // 자격증 시트 (gid=1184571085)
         const CERT_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?gid=1184571085&single=true&output=csv';
         // ──────────────────────────────────────────────────────────────
@@ -225,7 +225,9 @@
                 if (certData.length === 0) {
                     document.getElementById('main-container').innerHTML =
                         `<div class="text-center py-20 text-slate-500 text-sm">
-                            📋 자격증 시트를 구글 시트에 추가하고<br>코드의 CERT_CSV gid를 교체해주세요
+                            ⏳ 자격증 데이터 로딩 중...<br>
+                            <span class="text-[10px] text-slate-600">잠시 후 새로고침 해주세요</span><br><br>
+                            <button onclick="fetchAll()" class="mt-2 px-4 py-2 bg-blue-600/30 text-blue-300 rounded-lg text-xs">🔄 다시 시도</button>
                         </div>`;
                     return;
                 }
