@@ -66,6 +66,8 @@
                 class="sub-filter bg-rose-900/40 text-rose-300 px-3 py-1.5 rounded-lg font-bold">빅분기</button>
             <button onclick="switchSubject('파이썬')" data-subject="파이썬"
                 class="sub-filter bg-green-900/40 text-green-300 px-3 py-1.5 rounded-lg font-bold">파이썬</button>
+            <button onclick="switchSubject('분류학')" data-subject="분류학"
+                class="sub-filter bg-amber-900/40 text-amber-300 px-3 py-1.5 rounded-lg font-bold">분류학</button>
         </div>
     </div>
 
@@ -84,10 +86,10 @@
         // 언어학습 시트1 (gid=0)
         const LANG_CSV = 'https://docs.google.com/spreadsheets/d/1-DGHkV3qOo6Ej4Uw_curAPCVASoAoWPyyWeeq8ev8fk/pub?gid=0&single=true&output=csv';
         // 자격증 시트 (gid=1184571085)
-        const CERT_CSV = 'https://docs.google.com/spreadsheets/d/1-DGHkV3qOo6Ej4Uw_curAPCVASoAoWPyyWeeq8ev8fk/pub?gid=1184571085&single=true&output=csv';
+        const CERT_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?gid=1184571085&single=true&output=csv';
         // ──────────────────────────────────────────────────────────────
 
-        const CERT_SUBJECTS  = ['SQLD', '사조사', '정처기', '빅분기', '파이썬'];
+        const CERT_SUBJECTS  = ['SQLD', '사조사', '정처기', '빅분기', '파이썬', '분류학'];
         const LANG_TYPES     = ['ENGLISH', 'JAPANESE', 'CHINESE', 'KANJI', 'DATA', 'HISTORY'];
 
         let langData     = [];
