@@ -165,21 +165,75 @@
             window.speechSynthesis.speak(utt);
         }
 
+        // ── 캐시 키 ───────────────────────────────────────────────────
+        const CACHE_KEY_LANG = 'cache_lang_v2';
+        const CACHE_KEY_CERT = 'cache_cert_v2';
+        const CACHE_TTL = 1000 * 60 * 30; // 30분
+
+        function saveCache(key, data) {
+            try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
+        }
+        function loadCache(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const { ts, data } = JSON.parse(raw);
+                if (Date.now() - ts > CACHE_TTL) return null;
+                return data;
+            } catch(e) { return null; }
+        }
+
+        // ── 스켈레톤 UI ───────────────────────────────────────────────
+        function showSkeleton(count = 5) {
+            const container = document.getElementById('main-container');
+            container.innerHTML = Array(count).fill(`
+                <div class="glass-card p-6 border-l-4 border-slate-700/50 animate-pulse">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="h-3 w-16 bg-slate-700 rounded-full"></div>
+                        <div class="h-8 w-8 bg-slate-700 rounded-xl"></div>
+                    </div>
+                    <div class="h-5 w-3/4 bg-slate-700 rounded-full mb-3"></div>
+                    <div class="h-3 w-1/3 bg-slate-800 rounded-full"></div>
+                </div>`).join('');
+        }
+
         // ── 데이터 로드 ───────────────────────────────────────────────
         async function fetchAll() {
-            showLoader();
+            // 캐시 우선 로드 → 즉시 렌더
+            const cachedLang = loadCache(CACHE_KEY_LANG);
+            const cachedCert = loadCache(CACHE_KEY_CERT);
+
+            if (cachedLang) {
+                langData = cachedLang;
+                if (cachedCert) certData = cachedCert;
+                renderRandom(); // 캐시 있으면 즉시 표시
+            } else {
+                showSkeleton(currentTab === 'cert' ? 5 : 6); // 캐시 없을 때만 스켈레톤
+            }
+
+            // 백그라운드에서 최신 데이터 fetch
             try {
-                const r1 = await fetch(LANG_CSV);
-                langData = parseCSV(await r1.text());
-                // 자격증 시트 gid 설정 전까지는 빈 배열
-                try {
-                    const r2 = await fetch(CERT_CSV);
-                    certData = parseCSV(await r2.text());
-                } catch(e) { certData = []; }
-                renderRandom();
+                const [r1, r2] = await Promise.all([
+                    fetch(LANG_CSV),
+                    fetch(CERT_CSV).catch(() => null)
+                ]);
+                const newLang = parseCSV(await r1.text());
+                const newCert = r2 ? parseCSV(await r2.text()) : [];
+
+                // 데이터 갱신
+                langData = newLang;
+                certData = newCert;
+                saveCache(CACHE_KEY_LANG, newLang);
+                if (newCert.length > 0) saveCache(CACHE_KEY_CERT, newCert);
+
+                // 캐시 없었던 경우 or 새로고침 시 렌더
+                if (!cachedLang) renderRandom();
+
             } catch(e) {
-                document.getElementById('main-container').innerHTML =
-                    `<div class="text-red-400 text-sm text-center py-20">❌ CONNECTION ERROR<br><span class="text-[10px] text-slate-400">구글 시트 웹에 게시 설정 확인</span></div>`;
+                if (!cachedLang) {
+                    document.getElementById('main-container').innerHTML =
+                        `<div class="text-red-400 text-sm text-center py-20">❌ CONNECTION ERROR<br><span class="text-[10px] text-slate-400">구글 시트 웹에 게시 설정 확인</span></div>`;
+                }
             }
         }
 
