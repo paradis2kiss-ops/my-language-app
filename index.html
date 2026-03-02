@@ -25,6 +25,20 @@
         .sub-filter { transition: all 0.2s; font-size: 11px; white-space: nowrap; }
         .sub-filter.active { color: white; }
         .sub-filter:not(.active) { opacity: 0.4; }
+        /* 플래시카드 */
+        .flashcard-container { perspective: 1000px; }
+        .flashcard { width: 100%; min-height: 350px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); cursor: pointer; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center; border-radius: 1.5rem; }
+        .flashcard-front { background: rgba(59,130,246,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(59,130,246,0.4); }
+        .flashcard-back { background: rgba(34,197,94,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(34,197,94,0.4); transform: rotateY(180deg); }
+        /* 업로드 모달 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 1.5rem; max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto; }
+        .upload-area { border: 2px dashed rgba(99,102,241,0.3); border-radius: 1rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.05); }
+        .upload-area.dragover { border-color: #6366f1; background: rgba(99,102,241,0.1); }
     </style>
 </head>
 <body class="pb-32">
@@ -34,20 +48,29 @@
             <h1 class="text-3xl font-extrabold tracking-tighter italic uppercase">2026 Master <span class="text-blue-400">V2</span></h1>
             <p id="engine-status" class="text-slate-500 text-xs mt-1 font-mono tracking-widest">SYSTEM: CLOUD SYNCED</p>
         </div>
-        <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg">
-            <i class="fa-solid fa-star"></i>
-        </button>
+        <div class="flex gap-2">
+            <button id="upload-btn" onclick="openUploadModal()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-green-400 border border-white/10 flex items-center justify-center shadow-lg hover:bg-slate-700/50 transition" style="display:none;">
+                <i class="fa-solid fa-upload"></i>
+            </button>
+            <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-star"></i>
+            </button>
+        </div>
     </header>
 
     <!-- 메인 탭 -->
-    <div class="px-6 mb-3 flex gap-3">
+    <div class="px-6 mb-3 flex gap-2">
         <button id="tab-lang" onclick="switchMainTab('lang')"
             class="main-tab active flex-1 py-2.5 rounded-xl border text-sm font-bold tracking-wide">
-            🌏 언어학습
+            🌏 언어
         </button>
         <button id="tab-cert" onclick="switchMainTab('cert')"
             class="main-tab flex-1 py-2.5 rounded-xl border text-sm font-bold tracking-wide">
             📚 자격증
+        </button>
+        <button id="tab-flash" onclick="switchMainTab('flash')"
+            class="main-tab flex-1 py-2.5 rounded-xl border text-sm font-bold tracking-wide">
+            🎴 카드
         </button>
     </div>
 
@@ -71,11 +94,57 @@
         </div>
     </div>
 
+    <!-- 플래시카드 컨트롤 -->
+    <div id="flash-controls" class="px-6 mb-4 hidden">
+        <div class="flex gap-2 items-center justify-between glass-card p-3 rounded-xl">
+            <div class="text-sm font-bold text-slate-300">
+                <span id="flash-progress">0</span> / <span id="flash-total">0</span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="prevFlashCard()" class="px-3 py-1.5 bg-slate-700/50 text-slate-300 rounded-lg text-sm font-bold hover:bg-slate-700 transition">
+                    ← 이전
+                </button>
+                <button onclick="nextFlashCard()" class="px-3 py-1.5 bg-blue-600/50 text-blue-300 rounded-lg text-sm font-bold hover:bg-blue-600 transition">
+                    다음 →
+                </button>
+            </div>
+        </div>
+    </div>
+
     <main id="main-container" class="px-6 space-y-5">
         <div class="flex items-center justify-center" style="min-height:50vh">
             <p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">SYNCING CLOUD DATA...</p>
         </div>
     </main>
+
+    <!-- CSV 업로드 모달 -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📁 플래시카드 CSV 업로드</h2>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white text-2xl">×</button>
+            </div>
+
+            <div class="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-xs text-blue-300">
+                <strong>📋 CSV 형식:</strong><br>
+                첫 번째 행은 헤더: Question,Answer,Category<br>
+                예시)<br>
+                "SQL WHERE절의 역할은?","조건에 맞는 행을 검색/필터링","SQLD"<br>
+                "정보처리기사 시험 과목은?","계획 분석 설계 구현...","정처기"
+            </div>
+
+            <div id="uploadArea" class="upload-area mb-4">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2 block"></i>
+                <p class="text-sm font-bold mb-1">CSV 파일을 드래그하거나 클릭</p>
+                <p class="text-xs text-slate-400">최대 5MB</p>
+                <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+            </div>
+
+            <button onclick="confirmUpload()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
+                ✅ 확인 및 업로드
+            </button>
+        </div>
+    </div>
 
     <button onclick="location.reload()" class="fixed bottom-10 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center active:rotate-180 transition duration-500 z-50">
         <i class="fa-solid fa-rotate text-white text-2xl"></i>
@@ -83,9 +152,7 @@
 
     <script>
         // ── 구글 시트 CSV URL ──────────────────────────────────────────
-        // 언어학습 시트1 (gid=0)
         const LANG_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?gid=0&single=true&output=csv';
-        // 자격증 시트 (gid=1184571085)
         const CERT_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5bBv7_SonmFxuArnlAaaie8EHDS4Px6ZF1uY3q1Mqcbgfgac-4V7D0CxSVwCOy4zQXog3FT8QzKpj/pub?gid=1184571085&single=true&output=csv';
         // ──────────────────────────────────────────────────────────────
 
@@ -94,9 +161,16 @@
 
         let langData     = [];
         let certData     = [];
+        let flashData    = [];
         let currentTab   = 'lang';
-        let currentSubject = 'ALL'; // 자격증 과목 필터
+        let currentSubject = 'ALL';
         let bookmarks    = JSON.parse(localStorage.getItem('bookmarks_v2') || '[]');
+        let pendingCSVData = null;
+
+        // 플래시카드 상태
+        let flashCurrentIndex = 0;
+        let flashReviewedCards = new Set();
+        let flashCorrectCards = new Set();
 
         // ── CSV 파서 ──────────────────────────────────────────────────
         function parseCSVRow(row) {
@@ -112,16 +186,31 @@
             result.push(current.trim());
             return result;
         }
+
         function cleanText(str) {
             if (!str) return '';
             return str.replace(/\*\*(.*?)\*\*/g, '$1').replace(/^"+|"+$/g, '').trim();
         }
+
         function parseCSV(csvText) {
             return csvText.split('\n').slice(1).map(row => {
                 if (!row.trim()) return null;
                 const cols = parseCSVRow(row);
                 return { type: cleanText(cols[0])||'', text: cleanText(cols[1])||'', sub: cleanText(cols[2])||'', lang: (cols[3]||'ko-KR').trim(), color: (cols[4]||'blue').trim() };
             }).filter(item => item && item.text !== '');
+        }
+
+        function parseFlashCSV(csvText) {
+            return csvText.split('\n').slice(1).map(row => {
+                if (!row.trim()) return null;
+                const cols = parseCSVRow(row);
+                return {
+                    front: cleanText(cols[0]) || '',
+                    back: cleanText(cols[1]) || '',
+                    category: cleanText(cols[2]) || 'General',
+                    id: cleanText(cols[0])?.toLowerCase().replace(/\s+/g, '_') || ''
+                };
+            }).filter(item => item && item.front && item.back);
         }
 
         // ── 음성 ──────────────────────────────────────────────────────
@@ -152,9 +241,9 @@
             }
             if (voice) utt.voice = voice;
             utt.lang = voice ? voice.lang : l;
-            utt.onerror = e => console.error('TTS:', e.error, lang);
             window.speechSynthesis.speak(utt);
         }
+
         function handleSpeakCustom(text, lang, rate, pitch) {
             window.speechSynthesis.cancel();
             const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
@@ -168,11 +257,13 @@
         // ── 캐시 키 ───────────────────────────────────────────────────
         const CACHE_KEY_LANG = 'cache_lang_v2';
         const CACHE_KEY_CERT = 'cache_cert_v2';
-        const CACHE_TTL = 1000 * 60 * 30; // 30분
+        const CACHE_KEY_FLASH = 'cache_flash_v2';
+        const CACHE_TTL = 1000 * 60 * 30;
 
         function saveCache(key, data) {
             try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch(e) {}
         }
+
         function loadCache(key) {
             try {
                 const raw = localStorage.getItem(key);
@@ -199,19 +290,21 @@
 
         // ── 데이터 로드 ───────────────────────────────────────────────
         async function fetchAll() {
-            // 캐시 우선 로드 → 즉시 렌더
             const cachedLang = loadCache(CACHE_KEY_LANG);
             const cachedCert = loadCache(CACHE_KEY_CERT);
+            const cachedFlash = loadCache(CACHE_KEY_FLASH);
 
             if (cachedLang) {
                 langData = cachedLang;
-                if (cachedCert) certData = cachedCert;
-                renderRandom(); // 캐시 있으면 즉시 표시
+                renderRandom();
             } else {
-                showSkeleton(currentTab === 'cert' ? 5 : 6); // 캐시 없을 때만 스켈레톤
+                showSkeleton(6);
             }
 
-            // 백그라운드에서 최신 데이터 fetch
+            if (cachedFlash) {
+                flashData = cachedFlash;
+            }
+
             try {
                 const [r1, r2] = await Promise.all([
                     fetch(LANG_CSV),
@@ -220,13 +313,11 @@
                 const newLang = parseCSV(await r1.text());
                 const newCert = r2 ? parseCSV(await r2.text()) : [];
 
-                // 데이터 갱신
                 langData = newLang;
                 certData = newCert;
                 saveCache(CACHE_KEY_LANG, newLang);
                 if (newCert.length > 0) saveCache(CACHE_KEY_CERT, newCert);
 
-                // 캐시 없었던 경우 or 새로고침 시 렌더
                 if (!cachedLang) renderRandom();
 
             } catch(e) {
@@ -237,27 +328,28 @@
             }
         }
 
-        function showLoader() {
-            document.getElementById('main-container').innerHTML =
-                `<div class="flex items-center justify-center" style="min-height:40vh"><p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">LOADING...</p></div>`;
-        }
-
         // ── 탭 전환 ───────────────────────────────────────────────────
         function switchMainTab(tab) {
             currentTab = tab;
             document.getElementById('tab-lang').classList.toggle('active', tab === 'lang');
             document.getElementById('tab-cert').classList.toggle('active', tab === 'cert');
+            document.getElementById('tab-flash').classList.toggle('active', tab === 'flash');
             document.getElementById('cert-filters').classList.toggle('hidden', tab !== 'cert');
-            if (tab === 'lang') currentSubject = 'ALL';
-            renderRandom();
+            document.getElementById('flash-controls').classList.toggle('hidden', tab !== 'flash');
+            document.getElementById('upload-btn').style.display = tab === 'flash' ? 'flex' : 'none';
+
+            if (tab === 'lang' || tab === 'cert') {
+                if (tab === 'lang') currentSubject = 'ALL';
+                renderRandom();
+            } else if (tab === 'flash') {
+                renderFlashCard();
+            }
         }
 
-        // ── 과목 필터 전환 ────────────────────────────────────────────
         function switchSubject(subject) {
             currentSubject = subject;
             document.querySelectorAll('.sub-filter').forEach(btn => {
-                const isActive = btn.dataset.subject === subject;
-                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('active', btn.dataset.subject === subject);
             });
             renderRandom();
         }
@@ -267,15 +359,13 @@
             let picked = [];
 
             if (currentTab === 'lang') {
-                // 언어학습: TYPE별 1개씩
                 LANG_TYPES.forEach(type => {
                     const pool = langData.filter(d => d.type === type);
                     if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
                 });
                 document.getElementById('engine-status').innerText = 'SYSTEM: 🌏 LANGUAGE · RANDOM';
 
-            } else {
-                // 자격증
+            } else if (currentTab === 'cert') {
                 if (certData.length === 0) {
                     document.getElementById('main-container').innerHTML =
                         `<div class="text-center py-20 text-slate-500 text-sm">
@@ -286,14 +376,12 @@
                     return;
                 }
                 if (currentSubject === 'ALL') {
-                    // 전체: 5과목에서 각 1개씩
                     CERT_SUBJECTS.forEach(subj => {
                         const pool = certData.filter(d => d.type === subj);
                         if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
                     });
                     document.getElementById('engine-status').innerText = 'SYSTEM: 📚 ALL SUBJECTS · RANDOM';
                 } else {
-                    // 특정 과목: 해당 과목에서 6개
                     const pool = certData.filter(d => d.type === currentSubject);
                     const shuffled = [...pool].sort(() => Math.random() - 0.5);
                     picked = shuffled.slice(0, 6);
@@ -318,7 +406,6 @@
                 const card = document.createElement('div');
                 card.className = `glass-card p-6 border-l-4 border-${item.color}-500/50`;
 
-                // 헤더
                 const header = document.createElement('div');
                 header.className = 'flex justify-between items-start mb-4';
                 const typeLabel = document.createElement('span');
@@ -327,13 +414,11 @@
                 const btnGroup = document.createElement('div');
                 btnGroup.className = 'flex gap-2 items-center';
 
-                // 북마크
                 const bookmarkBtn = document.createElement('button');
                 bookmarkBtn.className = `w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${isBookmarked ? 'bookmark-active' : 'text-slate-500'}`;
                 bookmarkBtn.innerHTML = `<i class="fa-solid fa-star text-xs"></i>`;
                 bookmarkBtn.addEventListener('click', () => toggleBookmark(item, bookmarkBtn));
 
-                // 음성 버튼 분기
                 if (item.type === 'KANJI') {
                     [
                         { label: '음·훈', code: 'ko-KR', bg: 'bg-slate-700', text: 'text-slate-300' },
@@ -346,7 +431,7 @@
                         b.addEventListener('click', () => handleSpeak(item.text, l.code));
                         btnGroup.appendChild(b);
                     });
-                } else if (item.type === 'ENGLISH' || item.type === 'ACTING') {
+                } else if (item.type === 'ENGLISH') {
                     const usBtn = document.createElement('button');
                     usBtn.className = 'voice-btn bg-blue-900/30 text-blue-400 px-2 py-1 rounded-lg text-[10px] font-bold';
                     usBtn.textContent = '🇺🇸 US';
@@ -368,7 +453,6 @@
                     ukBtn.addEventListener('pointerleave', () => clearTimeout(pressTimer));
                     btnGroup.appendChild(ukBtn);
                 } else {
-                    // 한국어(자격증 포함) 재생 버튼
                     const speakBtn = document.createElement('button');
                     speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
                     speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
@@ -380,12 +464,10 @@
                 header.appendChild(typeLabel);
                 header.appendChild(btnGroup);
 
-                // 텍스트
                 const textP = document.createElement('p');
                 textP.className = 'text-lg font-bold leading-tight mb-3 tracking-tight text-white/90';
                 textP.textContent = `"${item.text}"`;
 
-                // HINT 토글
                 const subP = document.createElement('p');
                 subP.className = 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
                 subP.textContent = '💡 HINT';
@@ -398,9 +480,8 @@
                         : 'text-[11px] text-slate-500 font-medium leading-relaxed cursor-pointer select-none';
                 });
 
-                // UK 슬라이더 패널
                 let ukPanel = null;
-                if (item.type === 'ENGLISH' || item.type === 'ACTING') {
+                if (item.type === 'ENGLISH') {
                     ukPanel = document.createElement('div');
                     ukPanel.className = 'uk-panel mt-3 px-1';
                     ukPanel.innerHTML = `
@@ -436,6 +517,190 @@
             });
         }
 
+        // ── 플래시카드 함수 ───────────────────────────────────────────
+        function renderFlashCard() {
+            const container = document.getElementById('main-container');
+            
+            if (flashData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-20 text-slate-500 text-sm">
+                        📁 플래시카드 CSV를 업로드해주세요<br>
+                        <span class="text-xs text-slate-600">우측 상단 📁 버튼 클릭</span>
+                    </div>`;
+                return;
+            }
+
+            const card = flashData[flashCurrentIndex];
+            const isFlipped = document.querySelector('.flashcard')?.classList.contains('flipped') || false;
+
+            container.innerHTML = `
+                <div class="flashcard-container px-6" style="min-height: 50vh; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="flashcard ${isFlipped ? 'flipped' : ''}" onclick="toggleFlashCard()">
+                        <div class="flashcard-front">
+                            <div class="text-slate-400 text-xs mb-6 font-mono tracking-widest">QUESTION</div>
+                            <p class="text-xl font-bold text-white mb-6 leading-relaxed">${card.front}</p>
+                            <div class="text-slate-500 text-xs mt-6">클릭하여 정답 확인 →</div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="text-slate-400 text-xs mb-6 font-mono tracking-widest">ANSWER</div>
+                            <p class="text-xl font-bold text-green-300 mb-6 leading-relaxed">${card.back}</p>
+                            <div class="text-slate-500 text-xs mt-6">← 클릭하여 돌아가기</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 mt-8 space-y-3">
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="markFlashReview(false)" class="px-4 py-2 bg-red-900/30 text-red-400 rounded-lg text-sm font-bold hover:bg-red-900/50 transition">
+                            ✗ 틀림
+                        </button>
+                        <button onclick="markFlashReview(true)" class="px-4 py-2 bg-green-900/30 text-green-400 rounded-lg text-sm font-bold hover:bg-green-900/50 transition">
+                            ✓ 맞음
+                        </button>
+                    </div>
+                    <div class="text-center text-xs text-slate-500">
+                        카테고리: <span class="text-slate-400">${card.category}</span>
+                    </div>
+                </div>`;
+
+            updateFlashProgress();
+        }
+
+        function toggleFlashCard() {
+            const card = document.querySelector('.flashcard');
+            if (card) card.classList.toggle('flipped');
+        }
+
+        function nextFlashCard() {
+            if (flashCurrentIndex < flashData.length - 1) {
+                flashCurrentIndex++;
+                renderFlashCard();
+            } else {
+                showFlashSummary();
+            }
+        }
+
+        function prevFlashCard() {
+            if (flashCurrentIndex > 0) {
+                flashCurrentIndex--;
+                renderFlashCard();
+            }
+        }
+
+        function markFlashReview(isCorrect) {
+            const cardId = flashData[flashCurrentIndex].id;
+            flashReviewedCards.add(cardId);
+            if (isCorrect) {
+                flashCorrectCards.add(cardId);
+            } else {
+                flashCorrectCards.delete(cardId);
+            }
+            nextFlashCard();
+        }
+
+        function updateFlashProgress() {
+            document.getElementById('flash-progress').textContent = flashCurrentIndex + 1;
+            document.getElementById('flash-total').textContent = flashData.length;
+        }
+
+        function showFlashSummary() {
+            const total = flashData.length;
+            const correct = flashCorrectCards.size;
+            const percentage = Math.round((correct / total) * 100);
+
+            document.getElementById('main-container').innerHTML = `
+                <div class="px-6 pt-10 space-y-6">
+                    <div class="text-center">
+                        <h2 class="text-3xl font-bold text-white mb-2">학습 완료! 🎉</h2>
+                        <p class="text-slate-500">총 ${total}개 카드</p>
+                    </div>
+
+                    <div class="glass-card p-6 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-300">맞은 문제</span>
+                            <span class="text-2xl font-bold text-green-400">${correct}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-300">틀린 문제</span>
+                            <span class="text-2xl font-bold text-red-400">${total - correct}</span>
+                        </div>
+                        <div class="w-full bg-slate-700/50 rounded-full h-4 overflow-hidden mt-4">
+                            <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-4xl font-bold text-white">${percentage}%</p>
+                            <p class="text-slate-500 text-sm mt-1">정답률</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="resetFlashCard()" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">
+                            🔄 다시 시작
+                        </button>
+                        <button onclick="switchMainTab('lang')" class="flex-1 px-4 py-3 bg-slate-700 text-slate-300 rounded-lg font-bold hover:bg-slate-600 transition">
+                            다른 탭
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        function resetFlashCard() {
+            flashCurrentIndex = 0;
+            flashReviewedCards.clear();
+            flashCorrectCards.clear();
+            renderFlashCard();
+        }
+
+        // ── CSV 업로드 ────────────────────────────────────────────────
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+            setupDragDrop();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            pendingCSVData = null;
+            document.getElementById('csvInput').value = '';
+            document.getElementById('uploadArea').innerHTML = `
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2 block"></i>
+                <p class="text-sm font-bold mb-1">CSV 파일을 드래그하거나 클릭</p>
+                <p class="text-xs text-slate-400">최대 5MB</p>`;
+        }
+
+        function setupDragDrop() {
+            const area = document.getElementById('uploadArea');
+            area.addEventListener('click', () => document.getElementById('csvInput').click());
+            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
+            area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+            area.addEventListener('drop', (e) => { e.preventDefault(); area.classList.remove('dragover'); handleFileSelect({target: {files: e.dataTransfer.files}}); });
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingCSVData = e.target.result;
+                document.getElementById('uploadArea').innerHTML = `✅ <strong>${file.name}</strong> 준비됨`;
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmUpload() {
+            if (!pendingCSVData) { alert('파일을 선택해주세요'); return; }
+            const parsed = parseFlashCSV(pendingCSVData);
+            if (parsed.length === 0) { alert('유효한 데이터가 없습니다'); return; }
+
+            flashData = parsed;
+            saveCache(CACHE_KEY_FLASH, flashData);
+            flashCurrentIndex = 0;
+            flashReviewedCards.clear();
+            flashCorrectCards.clear();
+            alert(`✅ ${parsed.length}개 카드가 추가되었습니다!`);
+            closeUploadModal();
+            renderFlashCard();
+        }
+
         // ── 북마크 ────────────────────────────────────────────────────
         function toggleBookmark(item, btn) {
             const index = bookmarks.findIndex(b => b.text === item.text);
@@ -443,6 +708,7 @@
             else { bookmarks.push(item); btn.classList.add('bookmark-active'); btn.classList.remove('text-slate-500'); }
             localStorage.setItem('bookmarks_v2', JSON.stringify(bookmarks));
         }
+
         function toggleBookmarkView() {
             if (bookmarks.length === 0) { alert("저장된 카드가 없습니다!"); return; }
             document.getElementById('engine-status').innerText = 'SYSTEM: ⭐ BOOKMARKS';
