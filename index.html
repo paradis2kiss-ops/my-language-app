@@ -25,6 +25,13 @@
         .sub-filter { transition: all 0.2s; font-size: 11px; white-space: nowrap; }
         .sub-filter.active { color: white; }
         .sub-filter:not(.active) { opacity: 0.4; }
+        /* CSV 업로드 모달 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 1.5rem; max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto; }
+        .upload-area { border: 2px dashed rgba(99,102,241,0.3); border-radius: 1rem; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: rgba(99,102,241,0.6); background: rgba(99,102,241,0.05); }
+        .upload-area.dragover { border-color: #6366f1; background: rgba(99,102,241,0.1); }
     </style>
 </head>
 <body class="pb-32">
@@ -32,11 +39,16 @@
     <header class="p-6 pt-10 flex justify-between items-start">
         <div>
             <h1 class="text-3xl font-extrabold tracking-tighter italic uppercase">2026 Master <span class="text-blue-400">V2</span></h1>
-            <p id="engine-status" class="text-slate-500 text-xs mt-1 font-mono tracking-widest">SYSTEM: CLOUD SYNCED</p>
+            <p id="engine-status" class="text-slate-500 text-xs mt-1 font-mono tracking-widest">SYSTEM: READY</p>
         </div>
-        <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg">
-            <i class="fa-solid fa-star"></i>
-        </button>
+        <div class="flex gap-2">
+            <button onclick="openUploadModal()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-green-400 border border-white/10 flex items-center justify-center shadow-lg hover:bg-slate-700/50 transition">
+                <i class="fa-solid fa-upload"></i>
+            </button>
+            <button onclick="toggleBookmarkView()" class="w-12 h-12 bg-slate-800/50 rounded-2xl text-yellow-400 border border-white/10 flex items-center justify-center shadow-lg hover:bg-slate-700/50 transition">
+                <i class="fa-solid fa-star"></i>
+            </button>
+        </div>
     </header>
 
     <!-- 메인 탭 -->
@@ -73,9 +85,45 @@
 
     <main id="main-container" class="px-6 space-y-5">
         <div class="flex items-center justify-center" style="min-height:50vh">
-            <p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">SYNCING CLOUD DATA...</p>
+            <p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">READY FOR DATA...</p>
         </div>
     </main>
+
+    <!-- CSV 업로드 모달 -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">📁 CSV 파일 업로드</h2>
+                <button onclick="closeUploadModal()" class="text-slate-400 hover:text-white text-2xl">×</button>
+            </div>
+
+            <div class="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg text-xs text-blue-300">
+                <strong>📋 CSV 형식:</strong><br>
+                첫 번째 행은 헤더: Type, Question, Hint, Lang, Color<br>
+                예시) SQLD, "SQL 기본 문법", "SELECT 사용", ko-KR, blue
+            </div>
+
+            <div id="uploadArea" class="upload-area mb-4">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2 block"></i>
+                <p class="text-sm font-bold mb-1">CSV 파일을 드래그하거나 클릭</p>
+                <p class="text-xs text-slate-400">최대 5MB</p>
+                <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="handleFileSelect(event)">
+            </div>
+
+            <div class="space-y-2 mb-4">
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="radio" name="csvMode" value="lang" checked> 🌏 언어학습에 추가
+                </label>
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="radio" name="csvMode" value="cert"> 📚 자격증에 추가
+                </label>
+            </div>
+
+            <button onclick="confirmUpload()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition">
+                ✅ 확인 및 업로드
+            </button>
+        </div>
+    </div>
 
     <button onclick="location.reload()" class="fixed bottom-10 right-6 w-16 h-16 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(37,99,235,0.4)] flex items-center justify-center active:rotate-180 transition duration-500 z-50">
         <i class="fa-solid fa-rotate text-white text-2xl"></i>
@@ -95,8 +143,10 @@
         let langData     = [];
         let certData     = [];
         let currentTab   = 'lang';
-        let currentSubject = 'ALL'; // 자격증 과목 필터
+        let currentSubject = 'ALL';
         let bookmarks    = JSON.parse(localStorage.getItem('bookmarks_v2') || '[]');
+        let pendingCSVData = null;
+        let pendingCSVMode = 'lang';
 
         // ── CSV 파서 ──────────────────────────────────────────────────
         function parseCSVRow(row) {
@@ -183,6 +233,51 @@
             } catch(e) { return null; }
         }
 
+        // ── CSV 업로드 모달 ───────────────────────────────────────────
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+            setupDragDrop();
+        }
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            pendingCSVData = null;
+            document.getElementById('csvInput').value = '';
+        }
+        function setupDragDrop() {
+            const area = document.getElementById('uploadArea');
+            area.addEventListener('click', () => document.getElementById('csvInput').click());
+            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
+            area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+            area.addEventListener('drop', (e) => { e.preventDefault(); area.classList.remove('dragover'); handleFileSelect({target: {files: e.dataTransfer.files}}); });
+        }
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                pendingCSVData = e.target.result;
+                document.getElementById('uploadArea').innerHTML = `✅ <strong>${file.name}</strong> 준비됨`;
+            };
+            reader.readAsText(file);
+        }
+        function confirmUpload() {
+            if (!pendingCSVData) { alert('파일을 선택해주세요'); return; }
+            const mode = document.querySelector('input[name="csvMode"]:checked').value;
+            const parsed = parseCSV(pendingCSVData);
+            if (parsed.length === 0) { alert('유효한 데이터가 없습니다'); return; }
+
+            if (mode === 'lang') {
+                langData = [...langData, ...parsed];
+                saveCache(CACHE_KEY_LANG, langData);
+            } else {
+                certData = [...certData, ...parsed];
+                saveCache(CACHE_KEY_CERT, certData);
+            }
+            alert(`✅ ${parsed.length}개 항목이 추가되었습니다!`);
+            closeUploadModal();
+            currentTab === mode ? renderRandom() : null;
+        }
+
         // ── 스켈레톤 UI ───────────────────────────────────────────────
         function showSkeleton(count = 5) {
             const container = document.getElementById('main-container');
@@ -199,19 +294,17 @@
 
         // ── 데이터 로드 ───────────────────────────────────────────────
         async function fetchAll() {
-            // 캐시 우선 로드 → 즉시 렌더
             const cachedLang = loadCache(CACHE_KEY_LANG);
             const cachedCert = loadCache(CACHE_KEY_CERT);
 
             if (cachedLang) {
                 langData = cachedLang;
                 if (cachedCert) certData = cachedCert;
-                renderRandom(); // 캐시 있으면 즉시 표시
+                renderRandom();
             } else {
-                showSkeleton(currentTab === 'cert' ? 5 : 6); // 캐시 없을 때만 스켈레톤
+                showSkeleton(currentTab === 'cert' ? 5 : 6);
             }
 
-            // 백그라운드에서 최신 데이터 fetch
             try {
                 const [r1, r2] = await Promise.all([
                     fetch(LANG_CSV),
@@ -220,26 +313,19 @@
                 const newLang = parseCSV(await r1.text());
                 const newCert = r2 ? parseCSV(await r2.text()) : [];
 
-                // 데이터 갱신
                 langData = newLang;
                 certData = newCert;
                 saveCache(CACHE_KEY_LANG, newLang);
                 if (newCert.length > 0) saveCache(CACHE_KEY_CERT, newCert);
 
-                // 캐시 없었던 경우 or 새로고침 시 렌더
                 if (!cachedLang) renderRandom();
 
             } catch(e) {
                 if (!cachedLang) {
                     document.getElementById('main-container').innerHTML =
-                        `<div class="text-red-400 text-sm text-center py-20">❌ CONNECTION ERROR<br><span class="text-[10px] text-slate-400">구글 시트 웹에 게시 설정 확인</span></div>`;
+                        `<div class="text-center py-20"><p class="text-slate-500 text-sm">📁 CSV를 업로드하거나<br>구글 시트 연결을 확인해주세요</p></div>`;
                 }
             }
-        }
-
-        function showLoader() {
-            document.getElementById('main-container').innerHTML =
-                `<div class="flex items-center justify-center" style="min-height:40vh"><p class="text-slate-600 font-bold tracking-[0.2em] animate-pulse">LOADING...</p></div>`;
         }
 
         // ── 탭 전환 ───────────────────────────────────────────────────
@@ -267,37 +353,29 @@
             let picked = [];
 
             if (currentTab === 'lang') {
-                // 언어학습: TYPE별 1개씩
                 LANG_TYPES.forEach(type => {
                     const pool = langData.filter(d => d.type === type);
                     if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
                 });
-                document.getElementById('engine-status').innerText = 'SYSTEM: 🌏 LANGUAGE · RANDOM';
+                document.getElementById('engine-status').innerText = `LANG: ${langData.length} 항목 · RANDOM`;
 
             } else {
-                // 자격증
                 if (certData.length === 0) {
                     document.getElementById('main-container').innerHTML =
-                        `<div class="text-center py-20 text-slate-500 text-sm">
-                            ⏳ 자격증 데이터 로딩 중...<br>
-                            <span class="text-[10px] text-slate-600">잠시 후 새로고침 해주세요</span><br><br>
-                            <button onclick="fetchAll()" class="mt-2 px-4 py-2 bg-blue-600/30 text-blue-300 rounded-lg text-xs">🔄 다시 시도</button>
-                        </div>`;
+                        `<div class="text-center py-20 text-slate-500 text-sm">📁 자격증 데이터가 없습니다<br><button onclick="openUploadModal()" class="mt-2 px-4 py-2 bg-green-600/30 text-green-300 rounded-lg text-xs">CSV 업로드</button></div>`;
                     return;
                 }
                 if (currentSubject === 'ALL') {
-                    // 전체: 5과목에서 각 1개씩
                     CERT_SUBJECTS.forEach(subj => {
                         const pool = certData.filter(d => d.type === subj);
                         if (pool.length > 0) picked.push(pool[Math.floor(Math.random() * pool.length)]);
                     });
-                    document.getElementById('engine-status').innerText = 'SYSTEM: 📚 ALL SUBJECTS · RANDOM';
+                    document.getElementById('engine-status').innerText = `CERT: ${certData.length} 항목 · ALL`;
                 } else {
-                    // 특정 과목: 해당 과목에서 6개
                     const pool = certData.filter(d => d.type === currentSubject);
                     const shuffled = [...pool].sort(() => Math.random() - 0.5);
                     picked = shuffled.slice(0, 6);
-                    document.getElementById('engine-status').innerText = `SYSTEM: 📚 ${currentSubject} · RANDOM`;
+                    document.getElementById('engine-status').innerText = `CERT: ${pool.length} 항목 · ${currentSubject}`;
                 }
             }
 
@@ -333,7 +411,7 @@
                 bookmarkBtn.innerHTML = `<i class="fa-solid fa-star text-xs"></i>`;
                 bookmarkBtn.addEventListener('click', () => toggleBookmark(item, bookmarkBtn));
 
-                // 음성 버튼 분기
+                // 음성 버튼
                 if (item.type === 'KANJI') {
                     [
                         { label: '음·훈', code: 'ko-KR', bg: 'bg-slate-700', text: 'text-slate-300' },
@@ -368,7 +446,6 @@
                     ukBtn.addEventListener('pointerleave', () => clearTimeout(pressTimer));
                     btnGroup.appendChild(ukBtn);
                 } else {
-                    // 한국어(자격증 포함) 재생 버튼
                     const speakBtn = document.createElement('button');
                     speakBtn.className = `w-10 h-10 rounded-xl bg-${item.color}-500/20 text-${item.color}-400 flex items-center justify-center active:scale-90 transition-transform`;
                     speakBtn.innerHTML = `<i class="fa-solid fa-play"></i>`;
